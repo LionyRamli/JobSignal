@@ -47,6 +47,10 @@ and B2B opportunities.
 | Lint / format | `uv run ruff check .` · `uv run ruff format --check .` (fix: `ruff check --fix .`, `ruff format .`) |
 | Migrations | `uv run alembic upgrade head` · new: `uv run alembic revision --autogenerate -m "msg"` (ruff post-write hook auto-formats) |
 | Env | `JOBSIGNAL_DATABASE_URL`, `JOBSIGNAL_LOG_LEVEL` via env or `.env` (see `.env.example`) |
+| Scrape | `uv run python scripts/run_scrape.py anthropic databricks stripe [--out FILE]` → `data/raw/greenhouse-<UTC>.jsonl`; exit 1 if any company failed |
+| Fixtures | `uv run python scripts/record_greenhouse_fixture.py <token> <out.json>` (1 live GET, trimmed) |
+| ATS facts | Greenhouse: use `/v1/boards/{token}/departments` (jobs+dept, ~0.5 MB); OpenAI is on Ashby, not Greenhouse |
+| httpx test gotcha | `httpx.Response(content=bytes)` decodes eagerly in the test; use `content=iter([...])` to exercise client-side decoding |
 | Test gotchas | `tests/conftest.py` autouse fixture strips `JOBSIGNAL_*` env + chdirs to `tmp_path`; use `PROJECT_ROOT` for repo files |
 | Windows encoding | Python default is cp1252: always pass `encoding="utf-8"` to `read_text`/`write_text`/`open` (a missing one truncated TASKS.md once) |
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
