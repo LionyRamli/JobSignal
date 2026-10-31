@@ -20,6 +20,7 @@ from jobsignal.harmonization.taxonomy import (
     Seniority,
     load_taxonomy,
 )
+from jobsignal.models import DEPARTMENT_MAX, TITLE_MAX
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,10 @@ def _matches(matcher: PhraseMatcher, doc: Doc) -> list[tuple[str, int, int]]:
 
 def classify_title(title: str, department: str | None = None) -> RoleClassification:
     m = _matchers()
+    # spaCy's tokenizer is ~quadratic on long punctuation runs: cap untrusted input
+    # (stored titles/departments are already capped at these lengths).
+    title = title[:TITLE_MAX]
+    department = department[:DEPARTMENT_MAX] if department else department
     doc = m.nlp.make_doc(title)
 
     family_hits = _matches(m.family, doc)

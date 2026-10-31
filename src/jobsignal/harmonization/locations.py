@@ -46,6 +46,7 @@ _PIECE_SPLIT = re.compile(r"\s*(?:\||;|&|\s+or\s+|\s+and\s+)\s*", re.IGNORECASE)
 _NA = re.compile(r"\s*n\s*/\s*a\s*", re.IGNORECASE)
 _ISO_PREFIX = re.compile(r"([a-z]{2})\s*-\s*(.+)")
 _EDGE_JUNK = " -,()"
+MAX_RAW_LENGTH = 4_000  # longest real string seen: ~400 chars
 
 
 def split_pieces(raw: str) -> list[str]:
@@ -117,7 +118,7 @@ def _as_remote(place: CanonicalLocation | None) -> CanonicalLocation:
     return CanonicalLocation(LocationKind.REMOTE, place.country_code, place.region_code, None)
 
 
-def _resolve_simple(text: str) -> CanonicalLocation | None:
+def _resolve_simple(text: str, allow_prefix: bool = True) -> CanonicalLocation | None:
     """One comma-free (or whole-alias) normalized piece."""
     if not text:
         return None
@@ -126,9 +127,9 @@ def _resolve_simple(text: str) -> CanonicalLocation | None:
 
     g = _gazetteer()
     prefix = _ISO_PREFIX.fullmatch(text)
-    if prefix and prefix[1].upper() in g.iso_countries:
+    if allow_prefix and prefix and prefix[1].upper() in g.iso_countries:
         code = prefix[1].upper()
-        inner = _resolve_simple(prefix[2].strip(_EDGE_JUNK))
+        inner = _resolve_simple(prefix[2].strip(_EDGE_JUNK), allow_prefix=False)  # one level
         if inner is None:
             return None
         if inner.kind is LocationKind.REMOTE and inner.country_code is None:
@@ -140,7 +141,7 @@ def _resolve_simple(text: str) -> CanonicalLocation | None:
         rest = " ".join(rest.split()).strip(_EDGE_JUNK)
         if not rest:
             return _as_remote(None)
-        inner = _resolve_simple(rest)
+        inner = _resolve_simple(rest, allow_prefix=allow_prefix)
         return _as_remote(inner) if inner is not None else None
     return None
 
@@ -209,7 +210,10 @@ def parse_locations(raw: str | None) -> LocationParse:
         return LocationParse((), ())
     locations: dict[str, CanonicalLocation] = {}
     unresolved: list[str] = []
-    for piece in split_pieces(raw):
+    pieces = split_pieces(raw[:MAX_RAW_LENGTH])
+    if len(raw) > MAX_RAW_LENGTH:
+        pieces = pieces[:-1]  # the cut-off last piece is noise, not an unresolved place
+    for piece in pieces:
         found, missed = _resolve_piece(piece)
         for loc in found:
             locations.setdefault(loc.key, loc)
