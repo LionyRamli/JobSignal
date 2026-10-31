@@ -67,3 +67,25 @@ def test_posting_accepts_http_and_https_urls():
     assert (
         make_posting(url="http://stripe.com/jobs?gh_jid=1").url == "http://stripe.com/jobs?gh_jid=1"
     )
+
+
+def test_field_limits_match_storage_columns():
+    from jobsignal.models import DEPARTMENT_MAX, EXTERNAL_ID_MAX, TITLE_MAX
+
+    assert (TITLE_MAX, DEPARTMENT_MAX, EXTERNAL_ID_MAX) == (512, 256, 64)
+
+
+def test_overlong_title_is_truncated_not_rejected():
+    posting = make_posting(title="Senior " + "x" * 600)
+    assert len(posting.title) == 512
+    assert posting.title.startswith("Senior x")
+
+
+def test_overlong_department_is_truncated():
+    assert len(make_posting(department="D" * 300).department) == 256
+
+
+def test_overlong_external_id_is_rejected():
+    assert make_posting(external_id="9" * 64).external_id == "9" * 64
+    with pytest.raises(ValidationError):
+        make_posting(external_id="9" * 65)

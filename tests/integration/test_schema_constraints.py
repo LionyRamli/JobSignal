@@ -115,3 +115,12 @@ def test_snapshot_links_postings(session):
     session.flush()
     session.expire_all()
     assert [x.external_id for x in session.get(Snapshot, snap.id).postings] == ["1"]
+
+
+def test_column_lengths_come_from_model_limits():
+    from jobsignal.models import DEPARTMENT_MAX, EXTERNAL_ID_MAX, TITLE_MAX
+
+    columns = PostingRecord.__table__.c
+    assert columns.title.type.length == TITLE_MAX
+    assert columns.department.type.length == DEPARTMENT_MAX
+    assert columns.external_id.type.length == EXTERNAL_ID_MAX

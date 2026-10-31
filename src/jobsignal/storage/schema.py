@@ -20,6 +20,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
+from jobsignal.models import DEPARTMENT_MAX, EXTERNAL_ID_MAX, TITLE_MAX
 from jobsignal.storage.types import UTCDateTime
 
 # Deterministic constraint names so migrations work identically on SQLite and PostgreSQL.
@@ -106,10 +107,10 @@ class PostingRecord(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
-    external_id: Mapped[str] = mapped_column(String(64))
-    title: Mapped[str] = mapped_column(String(512))
+    external_id: Mapped[str] = mapped_column(String(EXTERNAL_ID_MAX))
+    title: Mapped[str] = mapped_column(String(TITLE_MAX))
     location_raw: Mapped[str | None] = mapped_column(Text)
-    department: Mapped[str | None] = mapped_column(String(256))
+    department: Mapped[str | None] = mapped_column(String(DEPARTMENT_MAX))
     url: Mapped[str] = mapped_column(Text)
     first_published: Mapped[datetime | None] = mapped_column(UTCDateTime)
     updated_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
