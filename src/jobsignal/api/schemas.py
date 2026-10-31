@@ -1,8 +1,9 @@
 """Response models: the API's JSON contract (separate from the ORM)."""
 
+import json
 import math
-from datetime import UTC, datetime
-from typing import Annotated, Literal
+from datetime import UTC, date, datetime
+from typing import Annotated, Any, Literal
 
 from pydantic import AfterValidator, BaseModel, PlainSerializer
 
@@ -94,3 +95,103 @@ class PostingOut(BaseModel):
 class PostingsPage(BaseModel):
     items: list[PostingOut]
     next_cursor: str | None
+
+
+class SignalRunOut(BaseModel):
+    id: int
+    computed_at: UTC_DATETIME
+    as_of: UTC_DATETIME
+    signals_version: str
+    taxonomy_version: str
+    params: dict[str, Any]
+
+    @classmethod
+    def from_record(cls, run) -> "SignalRunOut":
+        return cls(
+            id=run.id,
+            computed_at=run.computed_at,
+            as_of=run.as_of,
+            signals_version=run.signals_version,
+            taxonomy_version=run.taxonomy_version,
+            params=json.loads(run.params),
+        )
+
+
+def _share(numerator: float | None, denominator: float | None) -> float | None:
+    if numerator is None or not denominator:
+        return None
+    return numerator / denominator
+
+
+class SignalOut(BaseModel):
+    """One stored score. Raw values are always present. For mix_shift, observed and
+    baseline_mean are cell TOTALS and share_recent / share_baseline are the comparable shares."""
+
+    id: int
+    run_id: int
+    detector: str
+    basis: str
+    level: str
+    company: str
+    role_family: str | None
+    country_code: str | None
+    week_start: date
+    observed: FiniteFloat
+    baseline_mean: FiniteFloat
+    baseline_std: FiniteFloat
+    baseline_weeks: int
+    z: FiniteFloat
+    status: str
+    is_signal: bool
+    direction: str | None
+    severity: str | None
+    share_recent: FiniteFloat
+    share_baseline: FiniteFloat
+    provisional: bool  # published-date basis: survivorship-biased
+
+    @classmethod
+    def from_record(cls, score, company: str) -> "SignalOut":
+        mix = score.detector == "mix_shift"
+        return cls(
+            id=score.id,
+            run_id=score.run_id,
+            detector=score.detector,
+            basis=score.basis,
+            level=score.level,
+            company=company,
+            role_family=score.role_family,
+            country_code=score.country_code,
+            week_start=score.week_start,
+            observed=score.observed,
+            baseline_mean=score.baseline_mean,
+            baseline_std=score.baseline_std,
+            baseline_weeks=score.baseline_weeks,
+            z=score.z,
+            status=score.status,
+            is_signal=score.is_signal,
+            direction=score.direction,
+            severity=score.severity,
+            share_recent=_share(score.observed, score.company_recent_total) if mix else None,
+            share_baseline=(
+                _share(score.baseline_mean, score.company_baseline_total) if mix else None
+            ),
+            provisional=score.basis == "published",
+        )
+
+
+class SignalsPage(BaseModel):
+    run: SignalRunOut | None
+    items: list[SignalOut]
+
+
+class PostingBrief(BaseModel):
+    id: int
+    title: str
+    url: str
+    locations: list[LocationOut]
+
+
+class SignalDetail(BaseModel):
+    signal: SignalOut
+    run: SignalRunOut
+    postings: list[PostingBrief]

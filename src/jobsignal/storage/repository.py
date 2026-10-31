@@ -520,3 +520,60 @@ def get_posting(session: Session, posting_id: int) -> PostingRecord | None:
         .options(selectinload(PostingRecord.locations), selectinload(PostingRecord.company))
         .where(PostingRecord.id == posting_id)
     )
+
+
+def list_signal_runs(session: Session, limit: int = 50) -> list[SignalRun]:
+    """Runs, newest as_of first (a later backtest of an older week sorts below the live run)."""
+    return list(
+        session.scalars(
+            select(SignalRun)
+            .order_by(SignalRun.as_of.desc(), SignalRun.computed_at.desc(), SignalRun.id.desc())
+            .limit(limit)
+        )
+    )
+
+
+def resolve_run(session: Session, run: str) -> SignalRun | None:
+    """'latest' (newest as_of) or a positive integer id; anything else raises ValueError."""
+    if run == "latest":
+        runs = list_signal_runs(session, limit=1)
+        return runs[0] if runs else None
+    if not (run.isascii() and run.isdigit() and int(run) > 0):
+        raise ValueError("run must be 'latest' or a positive integer id")
+    return session.get(SignalRun, int(run))
+
+
+def list_scores(
+    session: Session,
+    run_id: int,
+    *,
+    detector: str | None = None,
+    direction: str | None = None,
+    level: str | None = None,
+    company: str | None = None,
+    min_abs_z: float | None = None,
+    signals_only: bool = True,
+    limit: int = 100,
+) -> list[tuple[SignalScore, str]]:
+    """Scores of one run with their company token, strongest |z| first, NULL z last."""
+    statement = (
+        select(SignalScore, Company.board_token)
+        .join(Company, Company.id == SignalScore.company_id)
+        .where(SignalScore.run_id == run_id)
+    )
+    if detector is not None:
+        statement = statement.where(SignalScore.detector == detector)
+    if direction is not None:
+        statement = statement.where(SignalScore.direction == direction)
+    if level is not None:
+        statement = statement.where(SignalScore.level == level)
+    if company is not None:
+        statement = statement.where(Company.board_token == company)
+    if min_abs_z is not None:
+        statement = statement.where(func.abs(SignalScore.z) >= min_abs_z)
+    if signals_only:
+        statement = statement.where(SignalScore.is_signal.is_(True))
+    statement = statement.order_by(
+        func.abs(SignalScore.z).desc().nulls_last(), SignalScore.id
+    ).limit(limit)
+    return [(score, token) for score, token in session.execute(statement)]
