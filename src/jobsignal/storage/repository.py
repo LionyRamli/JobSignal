@@ -4,7 +4,9 @@ Functions take a Session and never commit: the caller owns transaction boundarie
 (the scrape CLI commits once per company so a later failure keeps earlier work).
 """
 
-from datetime import datetime
+import math
+from datetime import date, datetime
+from typing import NamedTuple
 
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
@@ -17,9 +19,13 @@ from jobsignal.storage.schema import (
     Location,
     PostingRecord,
     ScrapeRun,
+    SignalRun,
+    SignalScore,
     Snapshot,
+    posting_locations,
     snapshot_postings,
 )
+from jobsignal.storage.types import UTCDateTime
 
 
 class StaleSnapshotError(Exception):
@@ -229,3 +235,201 @@ def _get_or_create_location(session: Session, place) -> Location:
         session.add(location)
         session.flush()
     return location
+
+
+class OpeningRow(NamedTuple):
+    posting_id: int
+    company: str
+    role_family: str | None
+    country_code: str | None
+    first_seen_at: datetime
+    first_published: datetime | None
+    company_first_snapshot_at: datetime | None
+
+
+def opening_rows(session: Session) -> list[OpeningRow]:
+    """One row per posting and distinct located country (None when it has no country)."""
+    first_snapshot = (
+        select(Snapshot.company_id, func.min(Snapshot.fetched_at).label("first_at"))
+        .where(Snapshot.status.in_(("ok", "partial")))
+        .group_by(Snapshot.company_id)
+        .subquery()
+    )
+    statement = (
+        select(
+            PostingRecord.id,
+            Company.board_token,
+            PostingRecord.role_family,
+            Location.country_code,
+            PostingRecord.first_seen_at,
+            PostingRecord.first_published,
+            first_snapshot.c.first_at,
+        )
+        .join(Company, Company.id == PostingRecord.company_id)
+        .outerjoin(first_snapshot, first_snapshot.c.company_id == PostingRecord.company_id)
+        .outerjoin(posting_locations, posting_locations.c.posting_id == PostingRecord.id)
+        .outerjoin(Location, Location.id == posting_locations.c.location_id)
+        .distinct()
+        .order_by(PostingRecord.id)
+    )
+    utc = UTCDateTime()
+    rows = []
+    for pid, company, family, country, seen, published, first_at in session.execute(statement):
+        # first_at comes from an aggregate, so the column type's conversion is not applied
+        first_at = utc.process_result_value(_as_datetime(first_at), None)
+        rows.append(OpeningRow(pid, company, family, country, seen, published, first_at))
+    return rows
+
+
+def ok_snapshot_stats(session: Session) -> dict[str, list[tuple[datetime, int, int]]]:
+    """Company -> (fetched_at, posting_count, new_count) for every fully successful snapshot.
+
+    new_count = postings first seen at that snapshot. signals.coverage turns these into the
+    weeks whose new openings can be trusted (no outage gap, no re-import, no collapsed board).
+    """
+    new_by_time: dict[tuple[int, datetime], int] = {}
+    for company_id, seen_at, n in session.execute(
+        select(PostingRecord.company_id, PostingRecord.first_seen_at, func.count()).group_by(
+            PostingRecord.company_id, PostingRecord.first_seen_at
+        )
+    ):
+        new_by_time[
+            (company_id, UTCDateTime().process_result_value(_as_datetime(seen_at), None))
+        ] = n
+    stats: dict[str, list[tuple[datetime, int, int]]] = {}
+    statement = (
+        select(
+            Company.board_token, Snapshot.company_id, Snapshot.fetched_at, Snapshot.posting_count
+        )
+        .join(Company, Company.id == Snapshot.company_id)
+        .where(Snapshot.status == "ok")
+        .order_by(Snapshot.fetched_at)
+    )
+    for token, company_id, fetched_at, count in session.execute(statement):
+        new = new_by_time.get((company_id, fetched_at), 0)
+        stats.setdefault(token, []).append((fetched_at, int(count or 0), new))
+    return stats
+
+
+def _as_datetime(value):
+    if value is None or isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(str(value))
+
+
+SCORE_FRAME_COLUMNS = frozenset(
+    {
+        "detector", "basis", "level", "company", "role_family", "country", "week_start",
+        "observed", "baseline_mean", "baseline_std", "baseline_weeks", "z", "status",
+        "is_signal", "direction", "severity", "company_recent_total", "company_baseline_total",
+    }
+)  # fmt: skip
+
+
+def _nullable(value):
+    """pandas stores missing values as NaN/NaT/None; the database wants NULL."""
+    if value is None:
+        return None
+    if isinstance(value, float) and math.isnan(value):
+        return None
+    return value
+
+
+def _as_date(value) -> date:
+    if isinstance(value, datetime):
+        return value.date()
+    if hasattr(value, "date") and not isinstance(value, date):  # pandas Timestamp
+        return value.date()
+    return value
+
+
+def save_signal_run(
+    session: Session, computed_at: datetime, as_of: datetime, params, scores
+) -> SignalRun:
+    """Validate, then store one run and all its scores (append-only).
+
+    ``scores`` is a DataFrame with exactly SCORE_FRAME_COLUMNS. A z that is not finite is
+    allowed only for ``insufficient_history`` rows (stored as NULL); anywhere else it raises
+    before anything is written.
+    """
+    from jobsignal.harmonization.taxonomy import TAXONOMY_VERSION
+    from jobsignal.signals.params import SIGNALS_VERSION
+
+    if set(scores.columns) != SCORE_FRAME_COLUMNS:
+        missing = sorted(SCORE_FRAME_COLUMNS - set(scores.columns))
+        extra = sorted(set(scores.columns) - SCORE_FRAME_COLUMNS)
+        raise ValueError(f"score frame columns differ: missing={missing} extra={extra}")
+
+    company_ids: dict[str, int] = {}
+    for token, company_id in session.execute(select(Company.board_token, Company.id)):
+        if token in company_ids:
+            raise ValueError(f"board token {token!r} is ambiguous across sources")
+        company_ids[token] = company_id
+
+    rows = []
+    for record in scores.to_dict(orient="records"):
+        z = _nullable(record["z"])
+        if record["status"] != "insufficient_history" and (z is None or not math.isfinite(z)):
+            raise ValueError(f"z must be finite for {record['status']} rows, got {record['z']!r}")
+        if z is not None and not math.isfinite(z):
+            raise ValueError(f"z must be finite or NULL, got {z!r}")
+        if record["company"] not in company_ids:
+            raise ValueError(f"unknown company {record['company']!r}")
+        rows.append(
+            {
+                "detector": record["detector"],
+                "basis": record["basis"],
+                "level": record["level"],
+                "company_id": company_ids[record["company"]],
+                "role_family": _nullable(record["role_family"]),
+                "country_code": _nullable(record["country"]),
+                "week_start": _as_date(record["week_start"]),
+                "observed": float(record["observed"]),
+                "baseline_mean": _nullable(record["baseline_mean"]),
+                "baseline_std": _nullable(record["baseline_std"]),
+                "baseline_weeks": int(record["baseline_weeks"]),
+                "z": z,
+                "status": record["status"],
+                "is_signal": bool(record["is_signal"]),
+                "direction": _nullable(record["direction"]),
+                "severity": _nullable(record["severity"]),
+                "company_recent_total": _nullable(record["company_recent_total"]),
+                "company_baseline_total": _nullable(record["company_baseline_total"]),
+            }
+        )
+
+    run = SignalRun(
+        computed_at=computed_at,
+        as_of=as_of,
+        signals_version=SIGNALS_VERSION,
+        taxonomy_version=TAXONOMY_VERSION,
+        params=params.to_json(),
+    )
+    session.add(run)
+    session.flush()
+    if rows:
+        session.execute(insert(SignalScore), [{"run_id": run.id, **row} for row in rows])
+    return run
+
+
+def latest_signals(session: Session, limit: int = 50) -> list[SignalScore]:
+    """Signals of the run with the newest ``as_of``, strongest first (by |z|).
+
+    Ordering by as_of (not computed_at) means a backtest run computed later for an older
+    week never hides the live run.
+    """
+    newest = session.scalar(
+        select(SignalRun.id)
+        .order_by(SignalRun.as_of.desc(), SignalRun.computed_at.desc(), SignalRun.id.desc())
+        .limit(1)
+    )
+    if newest is None:
+        return []
+    return list(
+        session.scalars(
+            select(SignalScore)
+            .where(SignalScore.run_id == newest, SignalScore.is_signal.is_(True))
+            .order_by(func.abs(SignalScore.z).desc(), SignalScore.id)
+            .limit(limit)
+        )
+    )

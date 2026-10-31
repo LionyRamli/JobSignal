@@ -25,6 +25,7 @@ cp .env.example .env         # optional: override settings
 uv run alembic upgrade head  # create/migrate the local SQLite database
 uv run python scripts/run_scrape.py anthropic databricks stripe  # scrape + store
 uv run python scripts/run_harmonize.py                          # role + location taxonomy
+uv run python scripts/run_detect.py                             # hiring signals
 uv run pytest                # run the test suite
 uv run ruff check . && uv run ruff format --check .
 ```
@@ -67,6 +68,44 @@ Accuracy is gated in CI on hand-labelled real data. Titles score ≥90% on famil
 locations score ≥95%. A 25% holdout split is reported separately.
 Unresolvable places are reported and never guessed. Editing a rule file requires bumping
 `TAXONOMY_VERSION`, and CI enforces this. A bumped version reprocesses every posting.
+
+## Signals
+
+`detect` scores hiring per company x role family x country. It works at four levels
+(company, +family, +country, +both) and stores an append-only run with its parameters, the
+taxonomy version and the raw z, observed and baseline values of every row.
+
+| Detector | Basis | Question | Signal |
+|----------|-------|----------|--------|
+| `volume` | new openings **we observed** each week | Is this week unusual for this cell? | z ≥ 3 with ≥ 5 openings (expansion); z ≤ −3 with baseline ≥ 5 (contraction) |
+| `mix_shift` *(provisional)* | ATS `first_published` dates | Did this cell's share of the company's openings jump (last 4 vs previous 12 weeks)? | expansions only by default (z ≥ 3, ≥ 5 openings) |
+
+**How `volume` scores a week**
+- The week is compared with the previous 8 *measurable* weeks:
+  `z = (x − μ) / sqrt(max(s², μ, 1))`. The Poisson floor stops sparse cells from producing
+  infinite scores, so a cell whose baseline is below 9 a week cannot signal a contraction.
+- A week is measurable only when scraping covered it continuously. Every gap between
+  successful scrapes that touches the week must be no longer than max(48 h, 1.5 × that
+  company's usual gap).
+- So an outage hides its week **and** the backlog week after it. Weeks with a board re-import
+  (many ids replaced at once) or a collapsed board are hidden too. The first scrape's week
+  never counts.
+
+**Honest limits**
+- **Cold start.** `volume` needs ≥ 8 measurable weeks after the first scrape, so schedule a
+  daily scrape. Until then it reports `insufficient_history`.
+- **`mix_shift` is survivorship-biased.** It only sees postings that are still open. In
+  simulation, fast-filling roles showed an "expansion" in about half of runs with no real
+  change. Treat it as a lead to investigate, not evidence. Its contractions are not flagged
+  (`mix_flag_contractions=False`).
+- **False positives.** With only 8 baseline weeks and bursty posting, simulated false-positive
+  rates are about 0.2–1 % (Poisson) to 3–4 % (overdispersed) per cell-week, against a nominal
+  0.13 %. That means roughly 1–15 false `notable` expansions per run. Recalibrate the
+  threshold once real history exists.
+- **Overlapping levels.** One event can appear at up to four levels; the dashboard should
+  group them.
+- **Drill-down.** `jobsignal.signals.drilldown.postings_for_score(session, score)` lists the
+  postings behind any score.
 
 ## Configuration
 

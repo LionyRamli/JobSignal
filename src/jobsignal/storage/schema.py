@@ -5,7 +5,7 @@ exactly which postings were open in each snapshot, and ``postings`` carries
 first_seen/last_seen/closed_at for posting-duration analysis (Phase 2).
 """
 
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy import (
     CheckConstraint,
@@ -21,6 +21,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 from jobsignal.models import DEPARTMENT_MAX, EXTERNAL_ID_MAX, TITLE_MAX
+from jobsignal.signals.params import LEVELS as SIGNAL_LEVELS
 from jobsignal.storage.types import UTCDateTime
 
 # Deterministic constraint names so migrations work identically on SQLite and PostgreSQL.
@@ -35,6 +36,11 @@ NAMING_CONVENTION = {
 RUN_STATUSES = ("running", "succeeded", "partial", "failed")
 SNAPSHOT_STATUSES = ("ok", "partial", "failed")
 LOCATION_KINDS = ("city", "region", "country", "remote")  # = harmonization LocationKind
+SIGNAL_DETECTORS = ("volume", "mix_shift")
+SIGNAL_BASES = ("observed", "published")
+SIGNAL_STATUSES = ("scored", "insufficient_history", "below_min_count")
+SIGNAL_DIRECTIONS = ("expansion", "contraction")
+SIGNAL_SEVERITIES = ("notable", "strong")
 
 
 def _in(column: str, values: tuple[str, ...]) -> str:
@@ -153,3 +159,55 @@ class Location(Base):
     country_code: Mapped[str | None] = mapped_column(String(2))
     region_code: Mapped[str | None] = mapped_column(String(6))
     city: Mapped[str | None] = mapped_column(String(128))
+
+
+class SignalRun(Base):
+    """One execution of the detect command; params are stored so every score is reproducible."""
+
+    __tablename__ = "signal_runs"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    computed_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    as_of: Mapped[datetime] = mapped_column(UTCDateTime)
+    signals_version: Mapped[str] = mapped_column(String(16))
+    taxonomy_version: Mapped[str] = mapped_column(String(16))  # role families the run used
+    params: Mapped[str] = mapped_column(Text)
+
+
+class SignalScore(Base):
+    """A detector's score for one cell and week. Raw z and inputs are kept for every row."""
+
+    __tablename__ = "signal_scores"
+    __table_args__ = (
+        CheckConstraint(_in("detector", SIGNAL_DETECTORS), name="detector"),
+        CheckConstraint(_in("basis", SIGNAL_BASES), name="basis"),
+        CheckConstraint(_in("level", SIGNAL_LEVELS), name="level"),
+        CheckConstraint(_in("status", SIGNAL_STATUSES), name="status"),
+        CheckConstraint(_in("direction", SIGNAL_DIRECTIONS), name="direction"),
+        CheckConstraint(_in("severity", SIGNAL_SEVERITIES), name="severity"),
+        Index("ix_signal_scores_run_id_is_signal", "run_id", "is_signal"),
+        Index("ix_signal_scores_company_id_level_week_start", "company_id", "level", "week_start"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("signal_runs.id", ondelete="CASCADE"))
+    detector: Mapped[str] = mapped_column(String(16))
+    basis: Mapped[str] = mapped_column(String(16))
+    level: Mapped[str] = mapped_column(String(32))
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    role_family: Mapped[str | None] = mapped_column(String(32))
+    country_code: Mapped[str | None] = mapped_column(String(2))
+    week_start: Mapped[date]
+    observed: Mapped[float]
+    baseline_mean: Mapped[float | None]
+    baseline_std: Mapped[float | None]
+    baseline_weeks: Mapped[int]
+    z: Mapped[float | None]
+    status: Mapped[str] = mapped_column(String(24))
+    is_signal: Mapped[bool]
+    direction: Mapped[str | None] = mapped_column(String(16))
+    severity: Mapped[str | None] = mapped_column(String(16))
+    # mix_shift only: company totals N_r / N_b. There, observed (n_r) and baseline_mean (n_b)
+    # are cell TOTALS over the windows, so shares are observed / N_r and baseline_mean / N_b.
+    company_recent_total: Mapped[float | None]
+    company_baseline_total: Mapped[float | None]
