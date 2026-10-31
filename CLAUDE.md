@@ -67,9 +67,8 @@ and B2B opportunities.
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
 ## Status
-- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) — all on `main`, CI green
-- **In review:** Phase 1.4 signal detection (branch `feat/phase-1.4-signals`)
-- **Next:** schedule daily scrape → harmonize → detect (volume needs ≥ 8 covered weeks); Phase 1.5 API
+- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) — all on `main`, CI green
+- **Next:** Phase 1.5 API (FastAPI, read-only); ops: schedule daily scrape → harmonize → detect (volume needs ≥ 8 covered weeks)
 
 ## Approved Structure (2026-10-31)
 - `src/jobsignal/` layout: `config.py`, `logger.py`, `models.py`, `extraction/`, `harmonization/`,
