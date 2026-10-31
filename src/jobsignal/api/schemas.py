@@ -25,3 +25,21 @@ class Health(BaseModel):
     status: Literal["ok", "schema_missing"]
     taxonomy_version: str
     signals_version: str
+
+
+class Meta(BaseModel):
+    role_families: list[str]
+    seniorities: list[str]
+    location_kinds: list[str]
+    signal_levels: list[str]
+    detectors: list[str]
+    taxonomy_version: str
+    signals_version: str
+
+
+class Company(BaseModel):
+    board_token: str
+    source: str
+    open_postings: int
+    last_snapshot_at: UTC_DATETIME | None
+    last_snapshot_status: str | None

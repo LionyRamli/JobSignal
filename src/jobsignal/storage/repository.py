@@ -433,3 +433,42 @@ def latest_signals(session: Session, limit: int = 50) -> list[SignalScore]:
             .limit(limit)
         )
     )
+
+
+class CompanySummary(NamedTuple):
+    board_token: str
+    source: str
+    open_postings: int
+    last_snapshot_at: datetime | None
+    last_snapshot_status: str | None
+
+
+def company_summaries(session: Session, board_token: str | None = None) -> list[CompanySummary]:
+    """Companies with their open-posting count and latest snapshot, sorted by token."""
+    open_counts = (
+        select(PostingRecord.company_id, func.count().label("n"))
+        .where(PostingRecord.closed_at.is_(None))
+        .group_by(PostingRecord.company_id)
+        .subquery()
+    )
+    latest_id = (
+        select(Snapshot.company_id, func.max(Snapshot.id).label("snapshot_id"))
+        .group_by(Snapshot.company_id)
+        .subquery()
+    )
+    statement = (
+        select(
+            Company.board_token,
+            Company.source,
+            func.coalesce(open_counts.c.n, 0),
+            Snapshot.fetched_at,
+            Snapshot.status,
+        )
+        .outerjoin(open_counts, open_counts.c.company_id == Company.id)
+        .outerjoin(latest_id, latest_id.c.company_id == Company.id)
+        .outerjoin(Snapshot, Snapshot.id == latest_id.c.snapshot_id)
+        .order_by(Company.board_token)
+    )
+    if board_token is not None:
+        statement = statement.where(Company.board_token == board_token)
+    return [CompanySummary(*row) for row in session.execute(statement)]
