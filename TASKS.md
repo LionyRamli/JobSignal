@@ -2,13 +2,14 @@
 
 ## Active
 
-- [ ] **Phase 1.5: API** - planning (writing-plans → user approval); FastAPI read endpoints for companies, postings, signals
+- [ ] **Phase 1.5: Merge `feat/phase-1.5-api`** - waiting on user PR; branch CI must be green
 - [ ] **Ops: schedule daily scrape → harmonize → detect** - the volume detector needs ≥ 8 continuously covered weeks; history is now the bottleneck
 
 ## Backlog
 
 - [ ] **Phase 1.1b: AshbySource for OpenAI** - `api.ashbyhq.com/posting-api/job-board/openai`, same ATSSource interface
 - [ ] **Phase 1.3 follow-up from live signals** - 'engagement manager' / 'field engineer' phrases put 'Community Engagement Manager, Data Centers' and 'Field Engineer, Data Center Design' into solutions_engineering (inflated the live Anthropic SE/US signal); label golden rows first
+- [ ] **Phase 1.5 deferred** (final review) - /health 500 when DB unreachable (want 503); typed enum filters (typos → 422 not silent empty); CORS allow X-API-Key header; OpenAPI error models + APIKeyHeader scheme + date-time format; naive-datetime guard in _utc_z; uniform 422 body; double 500 log; tolerate renamed params in old runs; thread test via a session route; newest-first pagination option
 - [ ] **Phase 1.4 deferred** (final review) - recalibrate z threshold on real history (FPR 3-30x nominal under overdispersion); primary-level grouping across the 4 levels (dashboard); robust baseline; --as-of look-ahead in published basis; vacuous cold-start test, weak --as-of test, tautological uniform-growth test; consistency CHECKs; warn when postings not harmonized at current taxonomy; guard baseline_weeks >= 2; retention of repeated target weeks
 - [ ] **Phase 1.3 deferred minors** (final review) - City, ST, Country triples; broad 1-token family phrases (data center, business partner, research economist, risk analyst, <x> recruiter); seniority edge cases (to the CEO, Fellow, Associate GC); remote edge cases (Remote - IN, Remote - US & Canada, Remote - Anywhere); harmonize perf at 100k; single harmonize runner; version length assert; stronger version-bump test; golden tail coverage
 - [ ] **Phase 1.2 deferred minors** (final review) - run status vs exit code on rejected tokens; InvalidTokenError; schema check creates empty .db / OperationalError traceback; per-snapshot load of all history; test comment on SQLite var limit; repo tests read via identity map; doc closed_at bound + julianday durations
@@ -29,6 +30,7 @@
 - [x] ~~Create CLAUDE.md and TASKS.md~~ (2026-10-31)
 - [x] ~~Approve folder structure (+ alembic, central logging)~~ (2026-10-31)
 - [x] ~~Phase 0: Initial commit, push, CI green on GitHub (run 41214004282)~~ (2026-10-31)
+- [x] ~~Phase 1.5: API~~ (2026-11-01) - read-only FastAPI (health, meta, companies, postings w/ cursor, signals + drill-down), API key off-localhost, opaque 500s; 462 tests; live smoke on local DB
 - [x] ~~Phase 1.4: merged to main via PR, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.4: Signal detection~~ (2026-11-01) - volume + mix_shift detectors (expansion + contraction), coverage-based week availability, storage with raw values, detect CLI, drill-down; 387 tests; live: 1 provisional signal (anthropic SE/US z=+3.27)
 - [x] ~~Phase 1.3: merged to main via PR, CI green, branch deleted~~ (2026-11-01)
