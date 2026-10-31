@@ -4,7 +4,8 @@ Functions take a Session and never commit: the caller owns transaction boundarie
 (the scrape CLI commits once per company so a later failure keeps earlier work).
 """
 
-from datetime import datetime
+from datetime import date, datetime
+from typing import NamedTuple
 
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
@@ -18,8 +19,11 @@ from jobsignal.storage.schema import (
     PostingRecord,
     ScrapeRun,
     Snapshot,
+    posting_locations,
     snapshot_postings,
 )
+from jobsignal.storage.types import UTCDateTime
+from jobsignal.weeks import week_start
 
 
 class StaleSnapshotError(Exception):
@@ -229,3 +233,69 @@ def _get_or_create_location(session: Session, place) -> Location:
         session.add(location)
         session.flush()
     return location
+
+
+class OpeningRow(NamedTuple):
+    posting_id: int
+    company: str
+    role_family: str | None
+    country_code: str | None
+    first_seen_at: datetime
+    first_published: datetime | None
+    company_first_snapshot_at: datetime | None
+
+
+def opening_rows(session: Session) -> list[OpeningRow]:
+    """One row per posting and distinct located country (None when it has no country)."""
+    first_snapshot = (
+        select(Snapshot.company_id, func.min(Snapshot.fetched_at).label("first_at"))
+        .where(Snapshot.status.in_(("ok", "partial")))
+        .group_by(Snapshot.company_id)
+        .subquery()
+    )
+    statement = (
+        select(
+            PostingRecord.id,
+            Company.board_token,
+            PostingRecord.role_family,
+            Location.country_code,
+            PostingRecord.first_seen_at,
+            PostingRecord.first_published,
+            first_snapshot.c.first_at,
+        )
+        .join(Company, Company.id == PostingRecord.company_id)
+        .outerjoin(first_snapshot, first_snapshot.c.company_id == PostingRecord.company_id)
+        .outerjoin(posting_locations, posting_locations.c.posting_id == PostingRecord.id)
+        .outerjoin(Location, Location.id == posting_locations.c.location_id)
+        .distinct()
+        .order_by(PostingRecord.id)
+    )
+    utc = UTCDateTime()
+    rows = []
+    for pid, company, family, country, seen, published, first_at in session.execute(statement):
+        # first_at comes from an aggregate, so the column type's conversion is not applied
+        first_at = utc.process_result_value(_as_datetime(first_at), None)
+        rows.append(OpeningRow(pid, company, family, country, seen, published, first_at))
+    return rows
+
+
+def observed_weeks(session: Session) -> dict[str, set[date]]:
+    """Company → ISO week starts with at least one fully successful ('ok') snapshot.
+
+    Partial-only weeks are excluded: a partial fetch under-counts new openings.
+    """
+    weeks: dict[str, set[date]] = {}
+    statement = (
+        select(Company.board_token, Snapshot.fetched_at)
+        .join(Company, Company.id == Snapshot.company_id)
+        .where(Snapshot.status == "ok")
+    )
+    for company, fetched_at in session.execute(statement):
+        weeks.setdefault(company, set()).add(week_start(fetched_at))
+    return weeks
+
+
+def _as_datetime(value):
+    if value is None or isinstance(value, datetime):
+        return value
+    return datetime.fromisoformat(str(value))
