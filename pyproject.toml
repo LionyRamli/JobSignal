@@ -6,11 +6,13 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.13",
+    "fastapi>=0.115,<1",
     "httpx>=0.28.1",
     "pandas>=2.2,<3",
     "pydantic-settings>=2.4",
     "spacy>=3.8,<4",
     "sqlalchemy>=2.0",
+    "uvicorn>=0.30,<1",
 ]
 
 [dependency-groups]
@@ -32,6 +34,11 @@ packages = ["src/jobsignal"]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
 markers = ["integration: touches a real database or multiple modules"]
+filterwarnings = [
+  # Starlette's TestClient asks for the separate `httpx2` package; tests keep the httpx
+  # already used by the scraper (no extra dependency for test tooling).
+  "ignore:Using `httpx` with `starlette.testclient` is deprecated",
+]
 
 [tool.ruff]
 line-length = 100
