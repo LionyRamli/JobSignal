@@ -47,7 +47,9 @@ and B2B opportunities.
 | Lint / format | `uv run ruff check .` · `uv run ruff format --check .` (fix: `ruff check --fix .`, `ruff format .`) |
 | Migrations | `uv run alembic upgrade head` · new: `uv run alembic revision --autogenerate -m "msg"` (ruff post-write hook auto-formats) |
 | Env | `JOBSIGNAL_DATABASE_URL`, `JOBSIGNAL_LOG_LEVEL` via env or `.env` (see `.env.example`) |
-| Scrape | `uv run python scripts/run_scrape.py anthropic databricks stripe [--out FILE]` → `data/raw/greenhouse-<UTC>.jsonl`; exit 1 if any company failed |
+| Scrape | `uv run alembic upgrade head` once, then `uv run python scripts/run_scrape.py anthropic databricks stripe [--db URL] [--out FILE]`; exit 0 ok / 1 a company failed or was incomplete / 2 schema missing. One writer at a time |
+| Storage rules | closures only from complete fetches; failed snapshot posting_count is NULL; always filter `snapshots.status` in queries; times are aware UTC via `UTCDateTime` |
+| Migrations gotcha | env.py `render_item` writes `UTCDateTime` as `sa.DateTime(timezone=True)`: migrations never import app code |
 | Fixtures | `uv run python scripts/record_greenhouse_fixture.py <token> <out.json>` (1 live GET, trimmed) |
 | ATS facts | Greenhouse: use `/v1/boards/{token}/departments` (jobs+dept, ~0.5 MB); OpenAI is on Ashby, not Greenhouse |
 | httpx test gotcha | `httpx.Response(content=bytes)` decodes eagerly in the test; use `content=iter([...])` to exercise client-side decoding |

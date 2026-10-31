@@ -1,6 +1,6 @@
 import pytest
 
-from jobsignal.extraction.base import ATSSource
+from jobsignal.extraction.base import ATSSource, FetchResult
 from jobsignal.extraction.errors import (
     ExtractionError,
     InvalidPayloadError,
@@ -15,7 +15,7 @@ def test_atssource_cannot_be_instantiated():
         ATSSource()
 
 
-def test_subclass_without_fetch_postings_fails():
+def test_subclass_without_fetch_fails():
     class Incomplete(ATSSource):
         name = "incomplete"
 
@@ -27,10 +27,12 @@ def test_complete_subclass_can_be_instantiated():
     class Complete(ATSSource):
         name = "complete"
 
-        def fetch_postings(self, company):
-            return []
+        def fetch(self, company):
+            return FetchResult([], skipped=2)
 
     assert Complete().fetch_postings("acme") == []
+    assert Complete().fetch("acme").complete is False
+    assert FetchResult([]).complete is True
 
 
 @pytest.mark.parametrize(
