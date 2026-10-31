@@ -120,3 +120,38 @@ def test_limit_and_order(session, company):
     ids = [add_posting(session, company, str(i)).id for i in range(5)]
     session.commit()
     assert [p.id for p in postings_to_harmonize(session, "v1", limit=2)] == ids[:2]
+
+
+def test_scrape_edit_invalidates_harmonization(session, company):
+    from jobsignal.models import Posting
+    from jobsignal.storage.repository import record_snapshot, start_run
+
+    def posting(title, location, department="Sales", at=NOW):
+        return Posting(source="greenhouse", company="anthropic", external_id="1", title=title,
+                       location_raw=location, department=department, url="https://example.com/1",
+                       first_published=None, updated_at=None, fetched_at=at)  # fmt: skip
+
+    record_snapshot(session, start_run(session, NOW), company, [posting("AE", "London, UK")], NOW)
+    row = session.scalars(select(PostingRecord)).one()
+    save_harmonization(session, row, SWE_SENIOR, LocationParse((LONDON,), ()), "v1", NOW)
+    session.commit()
+
+    # unchanged re-scrape keeps the classification
+    record_snapshot(
+        session, start_run(session, LATER), company, [posting("AE", "London, UK", at=LATER)], LATER
+    )
+    session.commit()
+    assert row.taxonomy_version == "v1"
+
+    # any of title / location / department changing makes it pending again
+    later2 = LATER.replace(hour=13)
+    record_snapshot(
+        session,
+        start_run(session, later2),
+        company,
+        [posting("AE", "Seattle, WA", at=later2)],
+        later2,
+    )
+    session.commit()
+    assert row.taxonomy_version is None
+    assert [p.id for p in postings_to_harmonize(session, "v1", 10)] == [row.id]

@@ -42,7 +42,10 @@ class LocationParse:
     unresolved: tuple[str, ...]  # original text of pieces/parts that could not be resolved
 
 
-_PIECE_SPLIT = re.compile(r"\s*(?:\||;|&|\s+or\s+|\s+and\s+)\s*", re.IGNORECASE)
+# " or "/" and " directly after a comma is not a separator (", OR" is Oregon; ", or X" is
+# handled per comma part).
+_PIECE_SPLIT = re.compile(r"\s*(?:\||;|&|(?<!,)\s+or\s+|(?<!,)\s+and\s+)\s*", re.IGNORECASE)
+_LEADING_CONJUNCTION = re.compile(r"^(?:or|and)\s+(?=\S)")
 _NA = re.compile(r"\s*n\s*/\s*a\s*", re.IGNORECASE)
 _ISO_PREFIX = re.compile(r"([a-z]{2})\s*-\s*(.+)")
 _EDGE_JUNK = " -,()"
@@ -160,7 +163,7 @@ def _resolve_piece(piece: str) -> tuple[list[CanonicalLocation], list[str]]:
         return [direct], []
 
     originals = [p.strip() for p in piece.split(",")]
-    parts = [_normalize(p) for p in originals]
+    parts = [_LEADING_CONJUNCTION.sub("", _normalize(p)) for p in originals]
     found: list[CanonicalLocation] = []
     unresolved: list[str] = []
     i = 0
@@ -175,12 +178,26 @@ def _resolve_piece(piece: str) -> tuple[list[CanonicalLocation], list[str]]:
                 found.append(pair)
                 i += 2
                 continue
+        if b and _contradicting_qualifier(a, b):
+            unresolved.append(originals[i])  # "Paris, TX": never guess which Paris
+            i += 1
+            continue
         if a in t.unresolvable or (single := _resolve_simple(a)) is None:
             unresolved.append(originals[i])
         else:
             found.append(single)
         i += 1
     return found, unresolved
+
+
+def _contradicting_qualifier(a: str, b: str) -> bool:
+    """A full place name followed by a short region code it does not belong to.
+
+    "Paris, TX" or "London, ON" qualify a *different* city than the gazetteer's; lists like
+    "SF, NY" (abbreviations) or "San Francisco, New York" (full names) are not qualifiers.
+    """
+    t = _gazetteer().taxonomy
+    return len(a) > 3 and (a in t.cities or a in t.regions) and b in t.regions and len(b) <= 3
 
 
 def _resolve_pair(a: str, b: str) -> CanonicalLocation | None:

@@ -9,7 +9,7 @@ entry = ["new grad", "new graduate", "junior", "jr", "entry level", "entry-level
 mid = []
 senior = ["senior", "sr", "lead"]
 staff_plus = ["staff", "staff+", "principal", "distinguished", "fellow"]
-manager = ["manager", "managers", "team lead", "engineering manager", "management"]
+manager = ["manager", "managers", "team lead", "engineering manager"]
 director_plus = ["director", "head of", "head", "vp", "vice president", "svp", "evp",
                  "chief", "cto", "cfo", "ceo", "coo", "cmo", "cio", "ciso", "managing director"]
 

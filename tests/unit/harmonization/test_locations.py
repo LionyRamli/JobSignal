@@ -124,3 +124,47 @@ def test_iso_prefix_must_agree_with_the_place():
     result = parse_locations("CA-Seattle")  # Seattle is not in Canada
     assert result.locations == ()
     assert result.unresolved == ("CA-Seattle",)
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected", "unresolved"),
+    [
+        ("Paris, TX", ["region|US|US-TX|"], ("Paris",)),
+        ("Dublin, CA", ["region|US|US-CA|"], ("Dublin",)),
+        ("London, ON", ["region|CA|CA-ON|"], ("London",)),
+        ("Vancouver, WA", ["region|US|US-WA|"], ("Vancouver",)),
+        ("Portland, ME", ["region|US|US-ME|"], ("Portland",)),
+        ("Victoria, BC", ["region|CA|CA-BC|"], ("Victoria",)),
+    ],
+)
+def test_contradicting_city_and_region_code_is_not_guessed(raw, expected, unresolved):
+    result = parse_locations(raw)
+    assert [loc.key for loc in result.locations] == expected
+    assert result.unresolved == unresolved
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("SF, NY, Remote", ["city|US|US-CA|San Francisco", "region|US|US-NY|", "remote|||"]),
+        ("San Francisco, New York, Seattle",
+         ["city|US|US-CA|San Francisco", "region|US|US-NY|", "city|US|US-WA|Seattle"]),
+    ],
+)  # fmt: skip
+def test_city_lists_are_not_mistaken_for_qualifiers(raw, expected):
+    assert keys(raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected", "unresolved"),
+    [
+        ("Salem, OR or Remote", ["region|US|US-OR|", "remote|||"], ("Salem",)),
+        ("Portland, OR or Seattle, WA", ["city|US|US-OR|Portland", "city|US|US-WA|Seattle"], ()),
+        ("Seattle, San Francisco, or New York",
+         ["city|US|US-WA|Seattle", "city|US|US-CA|San Francisco", "region|US|US-NY|"], ()),
+    ],
+)  # fmt: skip
+def test_oregon_code_is_not_a_separator(raw, expected, unresolved):
+    result = parse_locations(raw)
+    assert [loc.key for loc in result.locations] == expected
+    assert result.unresolved == unresolved

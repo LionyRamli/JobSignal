@@ -80,3 +80,15 @@ def test_classifier_is_deterministic():
 def test_longest_phrase_wins_over_earliest():
     # "recruiting" (people) comes first; "data engineer" is longer and wins
     assert fam_sen("Recruiting Analytics Data Engineer")[0] == F.DATA
+
+
+@pytest.mark.parametrize(
+    ("title", "seniority"),
+    [
+        ("Staff Software Engineer - Access Management", S.STAFF_PLUS),
+        ("Software Engineer, Vulnerability Management", S.MID),
+        ("Product Manager, Identity & Access Management", S.MID),
+    ],
+)
+def test_management_as_a_domain_is_not_seniority(title, seniority):
+    assert fam_sen(title)[1] == seniority

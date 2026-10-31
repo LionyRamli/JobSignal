@@ -12,7 +12,7 @@ from functools import cache
 from importlib.resources import files
 from typing import Any
 
-TAXONOMY_VERSION = "2026.11.1"
+TAXONOMY_VERSION = "2026.11.2"
 
 
 class RoleFamily(StrEnum):

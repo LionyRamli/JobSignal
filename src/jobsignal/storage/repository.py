@@ -116,6 +116,13 @@ def record_snapshot(
                 company_id=company.id, external_id=external_id, first_seen_at=fetched_at
             )
             session.add(row)
+        inputs = (posting.title, posting.location_raw, posting.department)
+        if row.taxonomy_version is not None and inputs != (
+            row.title,
+            row.location_raw,
+            row.department,
+        ):
+            row.taxonomy_version = None  # re-harmonize: classified inputs changed
         row.title = posting.title
         row.location_raw = posting.location_raw
         row.department = posting.department

@@ -15,7 +15,7 @@ from jobsignal.harmonization.taxonomy import (
 
 
 def test_enums_match_spec():
-    assert TAXONOMY_VERSION == "2026.11.1"
+    assert TAXONOMY_VERSION == "2026.11.2"
     assert [f.value for f in RoleFamily] == [
         "software_engineering", "ml_research", "data", "solutions_engineering", "security",
         "product_management", "program_management", "design", "sales", "customer_success",
@@ -99,3 +99,35 @@ def test_data_files_are_not_gitignored():
         check=False,
     )
     assert result.returncode == 1, f"gitignored: {result.stdout}"
+
+
+# Changing any rule file or classifier must change TAXONOMY_VERSION (stored results carry it,
+# and only a version change makes `harmonize` reprocess). Update BOTH lines below together.
+FINGERPRINTED_VERSION = "2026.11.2"
+FINGERPRINT = "ece00814ba3a2157"
+
+
+def _fingerprint() -> str:
+    import hashlib
+
+    from tests.conftest import PROJECT_ROOT
+
+    root = PROJECT_ROOT / "src" / "jobsignal" / "harmonization"
+    paths = [
+        *(root / "data").glob("*.toml"),
+        root / "roles.py",
+        root / "locations.py",
+        root / "taxonomy.py",
+    ]
+    digest = hashlib.sha256()
+    for path in sorted(paths):
+        digest.update(path.name.encode())
+        digest.update(path.read_bytes().replace(b"\r\n", b"\n"))
+    return digest.hexdigest()[:16]
+
+
+def test_rule_changes_require_a_version_bump():
+    assert (TAXONOMY_VERSION, _fingerprint()) == (FINGERPRINTED_VERSION, FINGERPRINT), (
+        "harmonization rules changed: bump TAXONOMY_VERSION and update FINGERPRINTED_VERSION "
+        f"and FINGERPRINT (now {_fingerprint()}) in this test"
+    )
