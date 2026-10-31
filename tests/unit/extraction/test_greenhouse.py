@@ -134,7 +134,7 @@ def test_malformed_job_is_skipped_with_warning(caplog, monkeypatch):
 
 @pytest.mark.parametrize(
     "payload",
-    [{"jobs": []}, {"departments": "nope"}, [], {"departments": [{"id": 1}]}],
+    [{"jobs": []}, {"departments": "nope"}, [], {"departments": [{"name": "no id", "jobs": []}]}],
 )
 def test_wrong_top_level_shape_raises_invalid_payload(payload):
     source, _ = source_for(payload)
@@ -206,3 +206,31 @@ def test_malformed_job_id_cannot_forge_log_lines(caplog, monkeypatch):
     messages = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
     assert len(messages) == 1
     assert "\n" not in messages[0]
+
+
+@pytest.mark.parametrize("bad_job", [None, "job", 42, ["list"]])
+def test_non_object_job_is_skipped_not_fatal(bad_job, caplog, monkeypatch):
+    monkeypatch.setattr(logging.getLogger("jobsignal"), "propagate", True)
+    payload = load("departments_anthropic.json")
+    payload["departments"][0]["jobs"].insert(0, bad_job)
+    source, _ = source_for(payload)
+    with caplog.at_level(logging.WARNING, logger="jobsignal.extraction.greenhouse"):
+        postings = source.fetch_postings("anthropic")
+    assert len(postings) == 6
+    assert sum(r.levelname == "WARNING" for r in caplog.records) == 1
+
+
+def test_department_with_null_name_keeps_its_jobs_without_department():
+    payload = load("departments_anthropic.json")
+    payload["departments"][0]["name"] = None
+    source, _ = source_for(payload)
+    postings = source.fetch_postings("anthropic")
+    assert len(postings) == 6
+    assert postings[0].department is None
+
+
+def test_department_with_null_jobs_is_skipped_others_kept():
+    payload = load("departments_anthropic.json")
+    payload["departments"][0]["jobs"] = None  # holds 2 of the 6 jobs
+    source, _ = source_for(payload)
+    assert len(source.fetch_postings("anthropic")) == 4

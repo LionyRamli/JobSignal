@@ -43,8 +43,8 @@ class _GreenhouseJob(BaseModel):
 class _Department(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: int
-    name: str
-    jobs: list[dict[str, Any]]
+    name: str | None = None
+    jobs: list[Any] | None = None  # elements validated one by one in _to_posting
 
 
 class _DepartmentsPayload(BaseModel):
@@ -78,6 +78,13 @@ class GreenhouseSource(ATSSource):
         postings: list[Posting] = []
         seen: set[str] = set()
         for department in payload.departments:
+            if department.jobs is None:
+                logger.warning(
+                    "skipping department without job list company=%s department_id=%d",
+                    company,
+                    department.id,
+                )
+                continue
             department_name = None if department.id == NO_DEPARTMENT_ID else department.name
             for job in department.jobs:
                 posting = self._to_posting(job, company, department_name, fetched_at)
@@ -92,8 +99,13 @@ class GreenhouseSource(ATSSource):
         return postings
 
     def _to_posting(
-        self, job: dict[str, Any], company: str, department: str | None, fetched_at: datetime
+        self, job: Any, company: str, department: str | None, fetched_at: datetime
     ) -> Posting | None:
+        if not isinstance(job, dict):
+            logger.warning(
+                "skipping non-object job entry company=%s type=%s", company, type(job).__name__
+            )
+            return None
         try:
             parsed = _GreenhouseJob.model_validate(job)
             return Posting(

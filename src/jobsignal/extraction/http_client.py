@@ -122,12 +122,14 @@ class HttpClient:
                 if not 200 <= status < 300:
                     raise ExtractionError(f"GET {url} returned HTTP {status}")
                 body = self._read_capped(response, url)
+        except httpx.DecodingError as exc:  # e.g. corrupt gzip from a misbehaving proxy
+            raise InvalidPayloadError(f"GET {url}: undecodable response body") from exc
         except httpx.TransportError as exc:  # includes timeouts
             raise _Retryable(None, type(exc).__name__) from exc
 
         try:
             return json.loads(body)
-        except ValueError as exc:
+        except (ValueError, RecursionError) as exc:  # RecursionError: deeply nested input
             raise InvalidPayloadError(f"GET {url} did not return valid JSON") from exc
 
     def _read_capped(self, response: httpx.Response, url: str) -> bytes:

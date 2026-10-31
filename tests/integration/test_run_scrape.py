@@ -17,6 +17,12 @@ def board_transport(requested):
         requested.append(request.url.path)
         if request.url.path == "/v1/boards/anthropic/departments":
             return httpx.Response(200, content=FIXTURE)
+        if request.url.path == "/v1/boards/corrupt/departments":
+            return httpx.Response(
+                200, headers={"Content-Encoding": "gzip"}, content=iter([b"garbage"])
+            )
+        if request.url.path == "/v1/boards/nested/departments":
+            return httpx.Response(200, content=b"[" * 100_000)
         return httpx.Response(404)
 
     return httpx.MockTransport(handler)
@@ -68,3 +74,14 @@ def test_default_output_path_is_timestamped_under_data_raw(tmp_path):
     files = list((tmp_path / "data" / "raw").glob("greenhouse-*.jsonl"))
     assert len(files) == 1
     assert len(read_postings(files[0])) == 6
+
+
+def test_undecodable_responses_fail_their_company_only(tmp_path):
+    out = tmp_path / "run.jsonl"
+    code = main(
+        ["corrupt", "nested", "anthropic", "--out", str(out)],
+        transport=board_transport([]),
+        min_interval=0,
+    )
+    assert code == 1
+    assert len(read_postings(out)) == 6

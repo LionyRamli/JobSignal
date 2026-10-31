@@ -258,3 +258,19 @@ def test_non_ascii_digit_retry_after_falls_back_to_backoff(make_client, sleeps):
     handler = Scripted(httpx.Response(503, headers={"Retry-After": superscript_two}), ok())
     make_client(handler).get_json(URL)
     assert sleeps == [1.0]
+
+
+def test_corrupt_compressed_body_raises_invalid_payload(make_client):
+    handler = Scripted(
+        httpx.Response(
+            200, headers={"Content-Encoding": "gzip"}, content=iter([b"not gzip at all"])
+        )
+    )
+    with pytest.raises(InvalidPayloadError):
+        make_client(handler).get_json(URL)
+
+
+def test_deeply_nested_json_raises_invalid_payload(make_client):
+    handler = Scripted(httpx.Response(200, content=b"[" * 100_000))
+    with pytest.raises(InvalidPayloadError):
+        make_client(handler).get_json(URL)
