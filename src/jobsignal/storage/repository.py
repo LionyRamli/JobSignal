@@ -6,10 +6,17 @@ Functions take a Session and never commit: the caller owns transaction boundarie
 
 from datetime import datetime
 
-from sqlalchemy import select
+from sqlalchemy import insert, select
 from sqlalchemy.orm import Session
 
-from jobsignal.storage.schema import Company, ScrapeRun, Snapshot
+from jobsignal.models import Posting
+from jobsignal.storage.schema import (
+    Company,
+    PostingRecord,
+    ScrapeRun,
+    Snapshot,
+    snapshot_postings,
+)
 
 
 def get_or_create_company(
@@ -46,3 +53,95 @@ def finish_run(session: Session, run: ScrapeRun, now: datetime) -> ScrapeRun:
     run.finished_at = now
     session.flush()
     return run
+
+
+def record_snapshot(
+    session: Session,
+    run: ScrapeRun,
+    company: Company,
+    postings: list[Posting],
+    fetched_at: datetime,
+) -> Snapshot:
+    """Record a successful fetch of ``company``'s board.
+
+    Fetched postings are upserted (latest fields win), marked seen at ``fetched_at``, reopened
+    if they had been closed, and linked to the snapshot. Open postings of this company that were
+    not fetched are closed at ``fetched_at``. Nothing is written if any posting belongs elsewhere.
+    """
+    for posting in postings:
+        if (posting.source, posting.company) != (company.source, company.board_token):
+            raise ValueError(
+                f"posting {posting.external_id!r} ({posting.source}/{posting.company}) "
+                f"does not belong to {company.source}/{company.board_token}"
+            )
+    fetched: dict[str, Posting] = {}
+    for posting in postings:
+        fetched.setdefault(posting.external_id, posting)  # first occurrence wins
+
+    existing = {
+        row.external_id: row
+        for row in session.scalars(
+            select(PostingRecord).where(PostingRecord.company_id == company.id)
+        )
+    }
+    seen: list[PostingRecord] = []
+    for external_id, posting in fetched.items():
+        row = existing.get(external_id)
+        if row is None:
+            row = PostingRecord(
+                company_id=company.id, external_id=external_id, first_seen_at=fetched_at
+            )
+            session.add(row)
+        row.title = posting.title
+        row.location_raw = posting.location_raw
+        row.department = posting.department
+        row.url = posting.url
+        row.first_published = posting.first_published
+        row.updated_at = posting.updated_at
+        row.last_seen_at = fetched_at
+        row.closed_at = None
+        seen.append(row)
+
+    # Closing in Python (rows already loaded) avoids SQLite's bound-parameter limit on NOT IN.
+    for external_id, row in existing.items():
+        if external_id not in fetched and row.closed_at is None:
+            row.closed_at = fetched_at
+
+    snapshot = Snapshot(
+        run=run, company=company, fetched_at=fetched_at, status="ok", posting_count=len(fetched)
+    )
+    session.add(snapshot)
+    session.flush()
+    if seen:
+        session.execute(
+            insert(snapshot_postings),
+            [{"snapshot_id": snapshot.id, "posting_id": row.id} for row in seen],
+        )
+    return snapshot
+
+
+def record_failed_snapshot(
+    session: Session, run: ScrapeRun, company: Company, error_type: str, fetched_at: datetime
+) -> Snapshot:
+    """Record a failed fetch. Postings are deliberately untouched: a failure is not a closure."""
+    snapshot = Snapshot(
+        run=run,
+        company=company,
+        fetched_at=fetched_at,
+        status="failed",
+        posting_count=0,
+        error_type=error_type[:64],
+    )
+    session.add(snapshot)
+    session.flush()
+    return snapshot
+
+
+def open_postings(session: Session, company: Company) -> list[PostingRecord]:
+    return list(
+        session.scalars(
+            select(PostingRecord)
+            .where(PostingRecord.company_id == company.id, PostingRecord.closed_at.is_(None))
+            .order_by(PostingRecord.external_id)
+        )
+    )
