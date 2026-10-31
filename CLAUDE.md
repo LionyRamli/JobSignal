@@ -40,7 +40,7 @@ and B2B opportunities.
 |------|-------|
 | Python | 3.12.2 (system, only interpreter per `py -0`) |
 | uv | 0.13.6 installed (pip 24.0 also available) |
-| Git | 2.40.1, repo initialized on `main` (no remote yet) |
+| Git | 2.40.1, `main` → origin https://github.com/LionyRamli/JobSignal (CI: Actions `tests`); `gh` CLI not installed |
 | OS / shell | Windows 11, PowerShell + Git Bash; CI = ubuntu-latest |
 | Install | `uv sync` (CI: `uv sync --locked`); add deps with `uv add <pkg>` / `uv add --dev <pkg>` |
 | Test | `uv run pytest` · one file: `uv run pytest tests/unit/test_logger.py -q` · coverage: `--cov=jobsignal` |
@@ -48,6 +48,7 @@ and B2B opportunities.
 | Migrations | `uv run alembic upgrade head` · new: `uv run alembic revision --autogenerate -m "msg"` (ruff post-write hook auto-formats) |
 | Env | `JOBSIGNAL_DATABASE_URL`, `JOBSIGNAL_LOG_LEVEL` via env or `.env` (see `.env.example`) |
 | Test gotchas | `tests/conftest.py` autouse fixture strips `JOBSIGNAL_*` env + chdirs to `tmp_path`; use `PROJECT_ROOT` for repo files |
+| Windows encoding | Python default is cp1252: always pass `encoding="utf-8"` to `read_text`/`write_text`/`open` (a missing one truncated TASKS.md once) |
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
 ## Approved Structure (2026-10-31)
