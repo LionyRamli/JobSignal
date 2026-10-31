@@ -1,0 +1,326 @@
+# Gazetteer for location harmonization. Aliases are lower-case and unique across ALL tables
+# (countries, regions, cities, macro_regions), so every alias has exactly one meaning.
+# Deliberate calls: "la" = Louisiana (Los Angeles is "los angeles"), "wa" = Washington state,
+# "in" = Indiana, "ca" = California (Canada is "canada"/"can"; "CA-" prefixes are ISO codes),
+# bare "new york"/"ny" = New York State (the city is "nyc"/"new york city"),
+# bare "washington" = Washington State (DC needs "dc"/"d.c."), "singapore" = the city (SG).
+# Bump TAXONOMY_VERSION in taxonomy.py after any change.
+
+unresolvable.pieces = ["n/a", "na", "location", "in-person", "in person", "amer", "tbd", "various",
+                       "multiple locations", "anywhere"]
+
+[remote]
+markers = ["remote-friendly", "remote friendly", "remote", "rem"]
+fillers = ["in the", "from the", "in", "from", "travel-required", "travel required", "only", "-",
+           "(", ")", ","]
+
+[noise]
+words = ["hq", "privy", "metro area", "hybrid", "office", "headquarters", "area"]
+
+[countries]
+US = ["united states", "united states of america", "usa", "us", "u.s.", "u.s.a."]
+GB = ["united kingdom", "uk", "u.k.", "great britain", "britain"]
+IE = ["ireland", "ie"]
+IN = ["india"]
+JP = ["japan"]
+DE = ["germany", "deutschland"]
+NL = ["netherlands", "the netherlands", "holland"]
+FR = ["france"]
+KR = ["south korea", "korea", "republic of korea"]
+AU = ["australia"]
+CA = ["canada", "can"]
+RS = ["serbia"]
+SE = ["sweden"]
+CH = ["switzerland", "ch"]
+IT = ["italy"]
+BR = ["brazil", "brasil"]
+DK = ["denmark"]
+ES = ["spain"]
+NZ = ["new zealand"]
+MX = ["mexico", "méxico", "mx"]
+PL = ["poland"]
+RO = ["romania"]
+IL = ["israel"]
+CN = ["china"]
+TW = ["taiwan"]
+TH = ["thailand"]
+CR = ["costa rica"]
+FI = ["finland"]
+BE = ["belgium"]
+LU = ["luxembourg"]
+AT = ["austria"]
+NO = ["norway"]
+PT = ["portugal"]
+AE = ["united arab emirates", "uae"]
+HK = ["hong kong"]
+ID = ["indonesia"]
+PH = ["philippines"]
+VN = ["vietnam"]
+MY = ["malaysia"]
+AR = ["argentina"]
+CO = ["colombia"]
+CL = ["chile"]
+ZA = ["south africa"]
+
+[regions]
+US-AL = ["alabama", "al"]
+US-AK = ["alaska", "ak"]
+US-AZ = ["arizona", "az"]
+US-AR = ["arkansas", "ar"]
+US-CA = ["california", "ca"]
+US-CO = ["colorado", "co"]
+US-CT = ["connecticut", "ct"]
+US-DE = ["delaware", "de"]
+US-DC = ["district of columbia", "dc", "d.c.", "washington dc", "washington, dc", "washington d.c.",
+         "washington, d.c."]
+US-FL = ["florida", "fl"]
+US-GA = ["georgia", "ga"]
+US-HI = ["hawaii", "hi"]
+US-ID = ["idaho", "id"]
+US-IL = ["illinois", "il"]
+US-IN = ["indiana", "in"]
+US-IA = ["iowa", "ia"]
+US-KS = ["kansas", "ks"]
+US-KY = ["kentucky", "ky"]
+US-LA = ["louisiana", "la"]
+US-ME = ["maine", "me"]
+US-MD = ["maryland", "md"]
+US-MA = ["massachusetts", "ma"]
+US-MI = ["michigan", "mi"]
+US-MN = ["minnesota", "mn"]
+US-MS = ["mississippi", "ms"]
+US-MO = ["missouri", "mo"]
+US-MT = ["montana", "mt"]
+US-NE = ["nebraska", "ne"]
+US-NV = ["nevada", "nv"]
+US-NH = ["new hampshire", "nh"]
+US-NJ = ["new jersey", "nj"]
+US-NM = ["new mexico", "nm"]
+US-NY = ["new york", "ny", "new-york", "new york state"]
+US-NC = ["north carolina", "nc"]
+US-ND = ["north dakota", "nd"]
+US-OH = ["ohio", "oh"]
+US-OK = ["oklahoma", "ok"]
+US-OR = ["oregon", "or"]
+US-PA = ["pennsylvania", "pa"]
+US-RI = ["rhode island", "ri"]
+US-SC = ["south carolina", "sc"]
+US-SD = ["south dakota", "sd"]
+US-TN = ["tennessee", "tn"]
+US-TX = ["texas", "tx"]
+US-UT = ["utah", "ut"]
+US-VT = ["vermont", "vt"]
+US-VA = ["virginia", "va"]
+US-WA = ["washington", "wa", "washington state"]
+US-WV = ["west virginia", "wv"]
+US-WI = ["wisconsin", "wi"]
+US-WY = ["wyoming", "wy"]
+CA-ON = ["ontario", "on"]
+CA-BC = ["british columbia", "bc"]
+CA-AB = ["alberta", "ab"]
+CA-QC = ["quebec", "québec", "qc"]
+CA-MB = ["manitoba", "mb"]
+CA-SK = ["saskatchewan", "sk"]
+CA-NS = ["nova scotia", "ns"]
+AU-NSW = ["new south wales", "nsw"]
+AU-VIC = ["victoria", "vic"]
+AU-QLD = ["queensland", "qld"]
+AU-WA = ["western australia"]
+AU-ACT = ["australian capital territory", "act"]
+AU-SA = ["south australia"]
+IN-KA = ["karnataka"]
+IN-MH = ["maharashtra"]
+DE-BY = ["bavaria", "bayern"]
+DE-BW = ["baden-württemberg", "baden-wurttemberg", "baden-wuerttemberg"]
+DE-HE = ["hesse", "hessen"]
+GB-ENG = ["england"]
+GB-SCT = ["scotland"]
+
+[macro_regions]
+US = ["northeast - united states", "southeast - united states", "west coast - united states",
+      "central - united states", "southwest - united states", "northwest - united states",
+      "midwest - united states", "east coast", "west coast", "midwest", "east coast - united states"]
+
+# --- cities: name -> region (optional) + country, plus aliases -------------------------
+[cities."San Francisco"]
+region = "US-CA"
+country = "US"
+aliases = ["sf", "san fransisco", "sf bay area", "bay area"]
+[cities."South San Francisco"]
+region = "US-CA"
+country = "US"
+[cities."Mountain View"]
+region = "US-CA"
+country = "US"
+[cities."Los Angeles"]
+region = "US-CA"
+country = "US"
+[cities."San Diego"]
+region = "US-CA"
+country = "US"
+[cities."Berkeley"]
+region = "US-CA"
+country = "US"
+[cities."New York City"]
+region = "US-NY"
+country = "US"
+aliases = ["nyc", "new york city, new york", "manhattan"]
+[cities."Seattle"]
+region = "US-WA"
+country = "US"
+aliases = ["sea"]
+[cities."Bellevue"]
+region = "US-WA"
+country = "US"
+[cities."Chicago"]
+region = "US-IL"
+country = "US"
+aliases = ["chi"]
+[cities."Boston"]
+region = "US-MA"
+country = "US"
+[cities."Denver"]
+region = "US-CO"
+country = "US"
+[cities."Atlanta"]
+region = "US-GA"
+country = "US"
+aliases = ["atl"]
+[cities."Dallas"]
+region = "US-TX"
+country = "US"
+[cities."Austin"]
+region = "US-TX"
+country = "US"
+[cities."Plano"]
+region = "US-TX"
+country = "US"
+[cities."McLean"]
+region = "US-VA"
+country = "US"
+[cities."Philadelphia"]
+region = "US-PA"
+country = "US"
+[cities."Phoenix"]
+region = "US-AZ"
+country = "US"
+[cities."Charlotte"]
+region = "US-NC"
+country = "US"
+[cities."Raleigh"]
+region = "US-NC"
+country = "US"
+[cities."Portland"]
+region = "US-OR"
+country = "US"
+[cities."St. Louis"]
+region = "US-MO"
+country = "US"
+aliases = ["saint louis", "st louis"]
+[cities."Columbus"]
+region = "US-OH"
+country = "US"
+[cities."Toronto"]
+region = "CA-ON"
+country = "CA"
+aliases = ["tor"]
+[cities."Ottawa"]
+region = "CA-ON"
+country = "CA"
+[cities."Vancouver"]
+region = "CA-BC"
+country = "CA"
+[cities."Calgary"]
+region = "CA-AB"
+country = "CA"
+[cities."Montreal"]
+region = "CA-QC"
+country = "CA"
+aliases = ["montréal"]
+[cities."London"]
+region = "GB-ENG"
+country = "GB"
+[cities."Dublin"]
+country = "IE"
+[cities."Bengaluru"]
+region = "IN-KA"
+country = "IN"
+aliases = ["bangalore"]
+[cities."Mumbai"]
+region = "IN-MH"
+country = "IN"
+[cities."Delhi"]
+region = "IN-DL"
+country = "IN"
+aliases = ["new delhi"]
+[cities."Tokyo"]
+country = "JP"
+[cities."Munich"]
+region = "DE-BY"
+country = "DE"
+aliases = ["münchen", "muenchen"]
+[cities."Berlin"]
+region = "DE-BE"
+country = "DE"
+[cities."Amsterdam"]
+country = "NL"
+[cities."Paris"]
+country = "FR"
+[cities."Seoul"]
+country = "KR"
+[cities."Sydney"]
+region = "AU-NSW"
+country = "AU"
+[cities."Melbourne"]
+region = "AU-VIC"
+country = "AU"
+[cities."Brisbane"]
+region = "AU-QLD"
+country = "AU"
+[cities."Singapore"]
+country = "SG"
+[cities."Mexico City"]
+country = "MX"
+aliases = ["cdmx", "ciudad de méxico", "ciudad de mexico"]
+[cities."Belgrade"]
+country = "RS"
+[cities."Stockholm"]
+country = "SE"
+[cities."Zurich"]
+country = "CH"
+aliases = ["zürich", "zuerich"]
+[cities."Milan"]
+country = "IT"
+aliases = ["milano"]
+[cities."Sao Paulo"]
+country = "BR"
+aliases = ["são paulo"]
+[cities."Aarhus"]
+country = "DK"
+[cities."Madrid"]
+country = "ES"
+[cities."Barcelona"]
+country = "ES"
+[cities."Auckland"]
+country = "NZ"
+[cities."Bucharest"]
+country = "RO"
+[cities."Herzliya"]
+country = "IL"
+[cities."Tel Aviv"]
+country = "IL"
+[cities."Taipei"]
+country = "TW"
+aliases = ["taipei city"]
+[cities."Bangkok"]
+country = "TH"
+[cities."Heredia"]
+country = "CR"
+[cities."Warsaw"]
+country = "PL"
+[cities."Copenhagen"]
+country = "DK"
+[cities."Helsinki"]
+country = "FI"
+[cities."Brussels"]
+country = "BE"
