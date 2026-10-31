@@ -92,7 +92,7 @@ def test_data_files_are_not_gitignored():
     paths = [str(p.relative_to(PROJECT_ROOT)) for p in data_dir.glob("*.toml")]
     assert len(paths) == 3
     result = subprocess.run(  # noqa: S603 - fixed argv, no shell
-        ["git", "check-ignore", *paths],  # noqa: S607 - git on PATH in dev and CI
+        ["git", "check-ignore", "--no-index", *paths],  # noqa: S607 - git on PATH in dev and CI
         cwd=PROJECT_ROOT,
         capture_output=True,
         text=True,
