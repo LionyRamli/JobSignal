@@ -1,10 +1,10 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from jobsignal.api.deps import get_session
-from jobsignal.api.pagination import decode_cursor, encode_cursor
+from jobsignal.api.pagination import INT64_MAX, decode_cursor, encode_cursor
 from jobsignal.api.schemas import PostingOut, PostingsPage
 from jobsignal.storage.repository import get_posting, list_postings
 
@@ -43,7 +43,9 @@ def postings(
 
 
 @router.get("/postings/{posting_id}", response_model=PostingOut)
-def posting(posting_id: int, session: SessionDep) -> PostingOut:
+def posting(
+    posting_id: Annotated[int, Path(ge=1, le=INT64_MAX)], session: SessionDep
+) -> PostingOut:
     row = get_posting(session, posting_id)
     if row is None:
         raise HTTPException(status_code=404, detail="posting not found")

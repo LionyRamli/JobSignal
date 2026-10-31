@@ -1,9 +1,10 @@
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy.orm import Session
 
 from jobsignal.api.deps import get_session
+from jobsignal.api.pagination import INT64_MAX
 from jobsignal.api.schemas import (
     LocationOut,
     PostingBrief,
@@ -13,7 +14,7 @@ from jobsignal.api.schemas import (
     SignalsPage,
 )
 from jobsignal.signals.drilldown import postings_for_score
-from jobsignal.storage.repository import get_posting, list_scores, list_signal_runs, resolve_run
+from jobsignal.storage.repository import get_postings, list_scores, list_signal_runs, resolve_run
 from jobsignal.storage.schema import Company, SignalRun, SignalScore
 
 router = APIRouter(tags=["signals"])
@@ -65,16 +66,22 @@ def signals(
 
 
 @router.get("/signals/{signal_id}", response_model=SignalDetail)
-def signal_detail(signal_id: int, session: SessionDep) -> SignalDetail:
+def signal_detail(
+    signal_id: Annotated[int, Path(ge=1, le=INT64_MAX)], session: SessionDep
+) -> SignalDetail:
     score = session.get(SignalScore, signal_id)
     if score is None:
         raise HTTPException(status_code=404, detail="signal not found")
     company = session.get(Company, score.company_id).board_token
-    postings = []
-    for posting_id in postings_for_score(session, score):
-        row = get_posting(session, posting_id)
-        locations = [LocationOut.model_validate(x, from_attributes=True) for x in row.locations]
-        postings.append(PostingBrief(id=row.id, title=row.title, url=row.url, locations=locations))
+    postings = [
+        PostingBrief(
+            id=row.id,
+            title=row.title,
+            url=row.url,
+            locations=[LocationOut.model_validate(x, from_attributes=True) for x in row.locations],
+        )
+        for row in get_postings(session, postings_for_score(session, score))  # one bulk query
+    ]
     return SignalDetail(
         signal=SignalOut.from_record(score, company),
         run=SignalRunOut.from_record(session.get(SignalRun, score.run_id)),

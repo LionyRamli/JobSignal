@@ -247,7 +247,7 @@ class OpeningRow(NamedTuple):
     company_first_snapshot_at: datetime | None
 
 
-def opening_rows(session: Session) -> list[OpeningRow]:
+def opening_rows(session: Session, company: str | None = None) -> list[OpeningRow]:
     """One row per posting and distinct located country (None when it has no country)."""
     first_snapshot = (
         select(Snapshot.company_id, func.min(Snapshot.fetched_at).label("first_at"))
@@ -272,6 +272,8 @@ def opening_rows(session: Session) -> list[OpeningRow]:
         .distinct()
         .order_by(PostingRecord.id)
     )
+    if company is not None:
+        statement = statement.where(Company.board_token == company)
     utc = UTCDateTime()
     rows = []
     for pid, company, family, country, seen, published, first_at in session.execute(statement):
@@ -538,7 +540,7 @@ def resolve_run(session: Session, run: str) -> SignalRun | None:
     if run == "latest":
         runs = list_signal_runs(session, limit=1)
         return runs[0] if runs else None
-    if not (run.isascii() and run.isdigit() and int(run) > 0):
+    if not (run.isascii() and run.isdigit() and 0 < int(run) <= 2**63 - 1):
         raise ValueError("run must be 'latest' or a positive integer id")
     return session.get(SignalRun, int(run))
 
@@ -577,3 +579,17 @@ def list_scores(
         func.abs(SignalScore.z).desc().nulls_last(), SignalScore.id
     ).limit(limit)
     return [(score, token) for score, token in session.execute(statement)]
+
+
+def get_postings(session: Session, posting_ids: list[int]) -> list[PostingRecord]:
+    """Postings by id in one query (locations eager-loaded), in id order."""
+    if not posting_ids:
+        return []
+    return list(
+        session.scalars(
+            select(PostingRecord)
+            .options(selectinload(PostingRecord.locations))
+            .where(PostingRecord.id.in_(posting_ids))
+            .order_by(PostingRecord.id)
+        )
+    )

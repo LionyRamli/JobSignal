@@ -3,7 +3,8 @@
 import base64
 import binascii
 
-MAX_DIGITS = 19  # fits a signed 64-bit integer
+INT64_MAX = 2**63 - 1  # SQLite INTEGER / PostgreSQL bigint
+MAX_DIGITS = 19
 
 
 def encode_cursor(last_id: int) -> str:
@@ -15,6 +16,11 @@ def decode_cursor(cursor: str) -> int:
         text = base64.urlsafe_b64decode(cursor.encode("ascii")).decode("ascii")
     except (ValueError, binascii.Error, UnicodeError):
         raise ValueError("invalid cursor") from None
-    if not (text.isascii() and text.isdigit() and 0 < len(text) <= MAX_DIGITS and int(text) > 0):
+    if not (
+        text.isascii()
+        and text.isdigit()
+        and 0 < len(text) <= MAX_DIGITS
+        and 0 < int(text) <= INT64_MAX
+    ):
         raise ValueError("invalid cursor")
     return int(text)

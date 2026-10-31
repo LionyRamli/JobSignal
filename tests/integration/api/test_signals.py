@@ -109,3 +109,51 @@ def test_signal_runs_newest_as_of_first(seeded_api, migrated_url):
     assert [r["as_of"] for r in runs] == sorted((r["as_of"] for r in runs), reverse=True)
     assert len(runs) == 2
     assert runs[0]["taxonomy_version"]
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v1/signals/99999999999999999999",
+        "/api/v1/signals?run=99999999999999999999",
+        "/api/v1/signals/0",
+    ],
+)
+def test_out_of_range_signal_ids_are_422_not_500(seeded_api, path):
+    assert seeded_api.get(path).status_code == 422
+
+
+def test_signal_detail_query_count_is_bounded(seeded_api):
+    from sqlalchemy import event
+
+    expansion = next(i for i in seeded_api.get("/api/v1/signals").json()["items"] if i["z"] == 3.2)
+    statements = []
+
+    def record(conn, cursor, statement, *args):
+        if "sqlite_master" not in statement and not statement.startswith("PRAGMA"):
+            statements.append(statement)
+
+    engine = seeded_api.app.state.engine
+    event.listen(engine, "before_cursor_execute", record)
+    try:
+        assert seeded_api.get(f"/api/v1/signals/{expansion['id']}").status_code == 200
+    finally:
+        event.remove(engine, "before_cursor_execute", record)
+    # score + company + run + opening rows + postings + locations: constant, not per posting
+    assert len(statements) <= 8, statements
+
+
+def test_drilldown_loads_only_the_signal_company(seeded_api, monkeypatch):
+    """Perf guard: the drill-down must not scan every company's postings (final review I2)."""
+    import jobsignal.signals.drilldown as drilldown
+
+    real, calls = drilldown.opening_rows, []
+
+    def spy(session, company=None):
+        calls.append(company)
+        return real(session, company=company)
+
+    monkeypatch.setattr(drilldown, "opening_rows", spy)
+    expansion = next(i for i in seeded_api.get("/api/v1/signals").json()["items"] if i["z"] == 3.2)
+    seeded_api.get(f"/api/v1/signals/{expansion['id']}")
+    assert calls == ["acme"]

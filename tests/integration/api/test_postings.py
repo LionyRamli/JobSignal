@@ -96,3 +96,15 @@ def test_country_filter_alone(seeded_api):
     ]
     us = external_ids(seeded_api.get("/api/v1/postings", params={"country": "US"}).json())
     assert us == ["2", "3", "5"]
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v1/postings?cursor=OTk5OTk5OTk5OTk5OTk5OTk5OQ==",  # base64 of 9999999999999999999
+        "/api/v1/postings/9223372036854775808",  # int64 max + 1
+        "/api/v1/postings/0",
+    ],
+)
+def test_out_of_range_ids_are_422_not_500(seeded_api, path):
+    assert seeded_api.get(path).status_code == 422
