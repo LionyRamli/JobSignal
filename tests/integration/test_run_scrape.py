@@ -1,4 +1,4 @@
-"""The scrape CLI wired end-to-end over a mocked network: HttpClient + GreenhouseSource + output."""
+"""The scrape CLI end-to-end over a mocked network and a real migrated SQLite file."""
 
 import httpx
 import pytest
@@ -33,7 +33,7 @@ def read_postings(path):
     return [Posting.model_validate_json(line) for line in lines]
 
 
-def test_writes_jsonl_per_posting(tmp_path):
+def test_writes_jsonl_per_posting(tmp_path, migrated_url):
     out = tmp_path / "raw" / "run.jsonl"
     requested = []
 
@@ -48,7 +48,7 @@ def test_writes_jsonl_per_posting(tmp_path):
     assert requested == ["/v1/boards/anthropic/departments"]
 
 
-def test_one_failing_company_does_not_stop_others(tmp_path, capsys):
+def test_one_failing_company_does_not_stop_others(tmp_path, capsys, migrated_url):
     out = tmp_path / "run.jsonl"
     requested = []
 
@@ -67,16 +67,15 @@ def test_one_failing_company_does_not_stop_others(tmp_path, capsys):
     assert "../evil" in stderr
 
 
-def test_default_output_path_is_timestamped_under_data_raw(tmp_path):
+def test_jsonl_written_only_with_out(tmp_path, migrated_url):
     code = main(["anthropic"], transport=board_transport([]), min_interval=0)
 
     assert code == 0
-    files = list((tmp_path / "data" / "raw").glob("greenhouse-*.jsonl"))
-    assert len(files) == 1
-    assert len(read_postings(files[0])) == 6
+    assert not (tmp_path / "data").exists()
+    assert list(tmp_path.glob("**/*.jsonl")) == []
 
 
-def test_undecodable_responses_fail_their_company_only(tmp_path):
+def test_undecodable_responses_fail_their_company_only(tmp_path, migrated_url):
     out = tmp_path / "run.jsonl"
     code = main(
         ["corrupt", "nested", "anthropic", "--out", str(out)],
