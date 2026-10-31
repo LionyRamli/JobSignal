@@ -1,6 +1,6 @@
 # JobSignal
 
-<!-- CI badge: add once the GitHub repo URL exists -->
+[![tests](https://github.com/LionyRamli/JobSignal/actions/workflows/test.yml/badge.svg)](https://github.com/LionyRamli/JobSignal/actions/workflows/test.yml)
 
 Predictive business intelligence from job-market data. Companies reveal expansion plans
 through hiring before they announce them; JobSignal turns scattered ATS (Applicant Tracking
