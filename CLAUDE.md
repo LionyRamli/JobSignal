@@ -51,6 +51,9 @@ and B2B opportunities.
 | Storage rules | closures only from complete fetches; failed snapshot posting_count is NULL; always filter `snapshots.status` in queries; times are aware UTC via `UTCDateTime` |
 | Harmonize | `uv run python scripts/run_harmonize.py [--db URL] [--batch-size N]`; reprocesses postings whose taxonomy_version is missing/outdated; exit 2 if schema missing |
 | Taxonomy rule | ANY change to `harmonization/data/*.toml`, `roles.py`, `locations.py`, `taxonomy.py` → bump `TAXONOMY_VERSION` + update FINGERPRINT in `tests/unit/harmonization/test_taxonomy.py` (CI fails otherwise). Tune rules on `split=tune` golden rows only; never edit labels to pass |
+| Detect | `uv run python scripts/run_detect.py [--as-of YYYY-MM-DD] [--db URL]`; pipeline scrape → harmonize → detect; append-only runs; exit 2 schema missing / bad date |
+| Signals rules | bump `SIGNALS_VERSION` (signals/params.py) on any detector/param change; only weeks with continuous ok-snapshot coverage are measurable (signals/coverage.py); mix_shift is provisional + survivorship-biased; mix contractions not flagged by default |
+| Dashboard data | raw z/observed/baseline on every signal_scores row; mix rows: observed & baseline_mean are cell TOTALS, shares = / company_*_total; drill-down: signals.drilldown.postings_for_score |
 | Phase 1.4 counting | postings have MANY locations and places nest (city ⊂ region ⊂ country): count `COUNT(DISTINCT posting_id)` after roll-up |
 | .gitignore gotcha | no inline comments; anchor paths (`/data/`) — unanchored `data/` once hid package data |
 | Migrations gotcha | env.py `render_item` writes `UTCDateTime` as `sa.DateTime(timezone=True)`: migrations never import app code |
@@ -65,7 +68,8 @@ and B2B opportunities.
 
 ## Status
 - **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) — all on `main`, CI green
-- **Next:** Phase 1.4 signal detection (rolling baseline + z-score)
+- **In review:** Phase 1.4 signal detection (branch `feat/phase-1.4-signals`)
+- **Next:** schedule daily scrape → harmonize → detect (volume needs ≥ 8 covered weeks); Phase 1.5 API
 
 ## Approved Structure (2026-10-31)
 - `src/jobsignal/` layout: `config.py`, `logger.py`, `models.py`, `extraction/`, `harmonization/`,
