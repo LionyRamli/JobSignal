@@ -15,7 +15,7 @@ fillers = ["in the", "from the", "in", "from", "travel-required", "travel requir
            "(", ")", ","]
 
 [noise]
-words = ["hq", "privy", "metro area", "hybrid", "office", "headquarters", "area"]
+words = ["hq", "privy", "metro area", "hybrid", "office", "headquarters"]
 
 [countries]
 US = ["united states", "united states of america", "usa", "us", "u.s.", "u.s.a."]
@@ -164,7 +164,7 @@ country = "US"
 [cities."New York City"]
 region = "US-NY"
 country = "US"
-aliases = ["nyc", "new york city, new york", "manhattan"]
+aliases = ["nyc", "new york city, new york", "new york, ny", "new york, new york", "manhattan"]
 [cities."Seattle"]
 region = "US-WA"
 country = "US"

@@ -1,0 +1,151 @@
+piece,expected,split
+"San Francisco, CA",city|US|US-CA|San Francisco,tune
+"New York City, NY",city|US|US-NY|New York City,tune
+"Seattle, WA",city|US|US-WA|Seattle,tune
+"San Francisco, California",city|US|US-CA|San Francisco,holdout
+"Mountain View, California",city|US|US-CA|Mountain View,tune
+United States,country|US||,tune
+Singapore,city|SG||Singapore,tune
+"Bengaluru, India",city|IN|IN-KA|Bengaluru,holdout
+"Washington, DC",region|US|US-DC|,tune
+"Seattle, Washington",city|US|US-WA|Seattle,tune
+"London, UK",city|GB|GB-ENG|London,tune
+Dublin,city|IE||Dublin,tune
+"London, United Kingdom",city|GB|GB-ENG|London,tune
+"Tokyo, Japan",city|JP||Tokyo,tune
+"Bellevue, Washington",city|US|US-WA|Bellevue,tune
+"Munich, Germany",city|DE|DE-BY|Munich,tune
+"New York City, New York",city|US|US-NY|New York City,tune
+Bengaluru,city|IN|IN-KA|Bengaluru,tune
+"Washington, D.C.",region|US|US-DC|,holdout
+London,city|GB|GB-ENG|London,tune
+"Amsterdam, Netherlands",city|NL||Amsterdam,tune
+"Remote-Friendly, United States",remote|US||,holdout
+"Paris, France",city|FR||Paris,tune
+"Chicago, Illinois",city|US|US-IL|Chicago,tune
+Remote - California,remote|US|US-CA|,tune
+New York,region|US|US-NY|,tune
+"Seoul, South Korea",city|KR||Seoul,tune
+"Sydney, Australia",city|AU|AU-NSW|Sydney,tune
+Remote-Friendly (Travel-Required),remote|||,tune
+Mexico City,city|MX||Mexico City,holdout
+San Francisco,city|US|US-CA|San Francisco,tune
+"Toronto, Canada",city|CA|CA-ON|Toronto,tune
+N/A,,holdout
+Northeast - United States,country|US||,holdout
+Chicago,city|US|US-IL|Chicago,tune
+Toronto,city|CA|CA-ON|Toronto,holdout
+"Belgrade, Serbia",city|RS||Belgrade,tune
+US-Remote,remote|US||,holdout
+Remote - New York,remote|US|US-NY|,tune
+"Chicago, IL",city|US|US-IL|Chicago,tune
+"New York, NY",city|US|US-NY|New York City,tune
+Remote - Washington D.C.,remote|US|US-DC|,tune
+Southeast - United States,country|US||,tune
+Virginia,region|US|US-VA|,tune
+West Coast - United States,country|US||,tune
+"Berlin, Germany",city|DE|DE-BE|Berlin,holdout
+"Boston, MA",city|US|US-MA|Boston,holdout
+"Mumbai, India",city|IN|IN-MH|Mumbai,holdout
+"Denver, Colorado",city|US|US-CO|Denver,tune
+Remote - Colorado,remote|US|US-CO|,tune
+Remote - Texas,remote|US|US-TX|,tune
+US,country|US||,tune
+Remote-Friendly (Travel Required),remote|||,tune
+"Dublin, IE",city|IE||Dublin,tune
+"Atlanta, Georgia",city|US|US-GA|Atlanta,holdout
+"Boston, Massachusetts",city|US|US-MA|Boston,holdout
+"Stockholm, Sweden",city|SE||Stockholm,tune
+Maryland,region|US|US-MD|,holdout
+"Vancouver, Canada",city|CA|CA-BC|Vancouver,tune
+Central - United States,country|US||,holdout
+US Remote,remote|US||,tune
+"Dallas, Texas",city|US|US-TX|Dallas,tune
+"Zürich, Switzerland",city|CH||Zurich,holdout
+Seattle,city|US|US-WA|Seattle,tune
+Remote,remote|||,tune
+"Dublin, Ireland",city|IE||Dublin,tune
+Bangalore,city|IN|IN-KA|Bengaluru,holdout
+"Milan, Italy",city|IT||Milan,holdout
+Canada,country|CA||,tune
+Remote - Illinois,remote|US|US-IL|,tune
+Remote - Georgia,remote|US|US-GA|,holdout
+"Sao Paulo, Brazil",city|BR||Sao Paulo,tune
+New Jersey,region|US|US-NJ|,holdout
+"South San Francisco, CA",city|US|US-CA|South San Francisco,tune
+Remote - Washington,remote|US|US-WA|,holdout
+Illinois,region|US|US-IL|,holdout
+Massachusetts,region|US|US-MA|,tune
+Sydney,city|AU|AU-NSW|Sydney,tune
+Remote - Oregon,remote|US|US-OR|,tune
+"McLean, Virginia",city|US|US-VA|McLean,tune
+Remote - North Carolina,remote|US|US-NC|,tune
+Remote - Pennsylvania,remote|US|US-PA|,tune
+"Austin, Texas",city|US|US-TX|Austin,tune
+Remote - Virginia,remote|US|US-VA|,tune
+Ireland,country|IE||,tune
+US / Canada,country|US||;country|CA||,holdout
+"Ontario, CAN",region|CA|CA-ON|,tune
+"Melbourne, Australia",city|AU|AU-VIC|Melbourne,tune
+Remote - Massachusetts,remote|US|US-MA|,tune
+North Carolina,region|US|US-NC|,tune
+"Aarhus, Denmark",city|DK||Aarhus,tune
+Remote - Ohio,remote|US|US-OH|,tune
+Remote - Denmark,remote|DK||,tune
+California,region|US|US-CA|,tune
+Connecticut,region|US|US-CT|,tune
+"Philadelphia, Pennsylvania",city|US|US-PA|Philadelphia,tune
+"Dublin, London",city|IE||Dublin;city|GB|GB-ENG|London,holdout
+LOCATION,,tune
+Sydney Or Melbourne,city|AU|AU-NSW|Sydney;city|AU|AU-VIC|Melbourne,tune
+US-NYC,city|US|US-NY|New York City,tune
+"San Francisco, Seattle, New York",city|US|US-CA|San Francisco;city|US|US-WA|Seattle;region|US|US-NY|,tune
+"Zürich, CH",city|CH||Zurich,holdout
+"Calgary, Canada",city|CA|CA-AB|Calgary,tune
+Costa Rica,country|CR||,tune
+Madrid,city|ES||Madrid,tune
+Georgia,region|US|US-GA|,tune
+Texas,region|US|US-TX|,tune
+Remote - United Kingdom,remote|GB||,tune
+USCA,,holdout
+Israel,country|IL||,tune
+Remote - India,remote|IN||,holdout
+"London, Dublin",city|GB|GB-ENG|London;city|IE||Dublin,holdout
+US-San Francisco,city|US|US-CA|San Francisco,holdout
+Germany,country|DE||,tune
+NYC,city|US|US-NY|New York City,holdout
+"NYC, SF",city|US|US-NY|New York City;city|US|US-CA|San Francisco,holdout
+"San Francisco, New York, Seattle, Chicago, Atlanta, Remote in the US",city|US|US-CA|San Francisco;region|US|US-NY|;city|US|US-WA|Seattle;city|US|US-IL|Chicago;city|US|US-GA|Atlanta;remote|US||,tune
+Remote US,remote|US||,tune
+Barcelona,city|ES||Barcelona,tune
+"San Francisco, Seattle",city|US|US-CA|San Francisco;city|US|US-WA|Seattle,tune
+NYC-Privy,city|US|US-NY|New York City,tune
+"Queensland, Australia",region|AU|AU-QLD|,tune
+Alabama,region|US|US-AL|,tune
+Finland,country|FI||,tune
+Nevada,region|US|US-NV|,tune
+"Los Angeles, California",city|US|US-CA|Los Angeles,tune
+Delaware,region|US|US-DE|,tune
+Florida,region|US|US-FL|,tune
+"Auckland, New Zealand",city|NZ||Auckland,tune
+Tokyo,city|JP||Tokyo,tune
+USA,country|US||,tune
+"Mexico City, Mexico",city|MX||Mexico City,tune
+Poland OR Romania,country|PL||;country|RO||,tune
+Paris,city|FR||Paris,holdout
+"Atlanta, GA",city|US|US-GA|Atlanta,tune
+Mexico,country|MX||,holdout
+London OR Dublin,city|GB|GB-ENG|London;city|IE||Dublin,holdout
+"SF, NYC",city|US|US-CA|San Francisco;city|US|US-NY|New York City,tune
+Luxembourg,country|LU||,tune
+US-Chicago,city|US|US-IL|Chicago,holdout
+US-Atlanta,city|US|US-GA|Atlanta,tune
+US-Seattle,city|US|US-WA|Seattle,tune
+United Kingdom,country|GB||,tune
+"San Francisco, New York City, Seattle",city|US|US-CA|San Francisco;city|US|US-NY|New York City;city|US|US-WA|Seattle,tune
+Bucharest,city|RO||Bucharest,tune
+"Seattle, San Francisco",city|US|US-WA|Seattle;city|US|US-CA|San Francisco,holdout
+"Bangalore, India",city|IN|IN-KA|Bengaluru,tune
+"Montréal, Canada",city|CA|CA-QC|Montreal,holdout
+"Western Australia, Australia",region|AU|AU-WA|,tune
+"British Columbia, Canada",region|CA|CA-BC|,tune
