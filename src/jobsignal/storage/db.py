@@ -1,6 +1,6 @@
 """Engine factory. The only place that knows how to connect to the database."""
 
-from sqlalchemy import Engine, create_engine, event
+from sqlalchemy import Engine, create_engine, event, inspect
 from sqlalchemy.orm import Session, sessionmaker
 
 from jobsignal.config import get_settings
@@ -12,6 +12,13 @@ def make_engine(url: str | None = None) -> Engine:
     if engine.dialect.name == "sqlite":
         event.listen(engine, "connect", _enable_sqlite_foreign_keys)
     return engine
+
+
+def schema_ready(engine: Engine) -> bool:
+    """True when every table the ORM knows about exists (i.e. migrations have run)."""
+    from jobsignal.storage.schema import Base
+
+    return set(Base.metadata.tables) <= set(inspect(engine).get_table_names())
 
 
 def make_session_factory(engine: Engine) -> sessionmaker[Session]:

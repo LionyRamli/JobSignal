@@ -9,9 +9,12 @@ from datetime import datetime
 from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
+from jobsignal.harmonization.locations import LocationParse
+from jobsignal.harmonization.roles import RoleClassification
 from jobsignal.models import Posting
 from jobsignal.storage.schema import (
     Company,
+    Location,
     PostingRecord,
     ScrapeRun,
     Snapshot,
@@ -113,6 +116,13 @@ def record_snapshot(
                 company_id=company.id, external_id=external_id, first_seen_at=fetched_at
             )
             session.add(row)
+        inputs = (posting.title, posting.location_raw, posting.department)
+        if row.taxonomy_version is not None and inputs != (
+            row.title,
+            row.location_raw,
+            row.department,
+        ):
+            row.taxonomy_version = None  # re-harmonize: classified inputs changed
         row.title = posting.title
         row.location_raw = posting.location_raw
         row.department = posting.department
@@ -172,3 +182,50 @@ def open_postings(session: Session, company: Company) -> list[PostingRecord]:
             .order_by(PostingRecord.external_id)
         )
     )
+
+
+def postings_to_harmonize(session: Session, version: str, limit: int) -> list[PostingRecord]:
+    """Postings never harmonized, or harmonized with a different taxonomy version (by id)."""
+    return list(
+        session.scalars(
+            select(PostingRecord)
+            .where(
+                (PostingRecord.taxonomy_version.is_(None))
+                | (PostingRecord.taxonomy_version != version)
+            )
+            .order_by(PostingRecord.id)
+            .limit(limit)
+        )
+    )
+
+
+def save_harmonization(
+    session: Session,
+    posting: PostingRecord,
+    roles: RoleClassification,
+    places: LocationParse,
+    version: str,
+    now: datetime,
+) -> None:
+    """Store role/seniority and REPLACE the posting's canonical locations."""
+    posting.role_family = roles.family.value
+    posting.seniority = roles.seniority.value
+    posting.taxonomy_version = version
+    posting.harmonized_at = now
+    posting.locations = [_get_or_create_location(session, place) for place in places.locations]
+    session.flush()
+
+
+def _get_or_create_location(session: Session, place) -> Location:
+    location = session.scalar(select(Location).where(Location.key == place.key))
+    if location is None:
+        location = Location(
+            key=place.key,
+            kind=place.kind.value,
+            country_code=place.country_code,
+            region_code=place.region_code,
+            city=place.city,
+        )
+        session.add(location)
+        session.flush()
+    return location

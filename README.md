@@ -24,6 +24,7 @@ uv run pre-commit install    # secret scan (gitleaks) before every commit
 cp .env.example .env         # optional: override settings
 uv run alembic upgrade head  # create/migrate the local SQLite database
 uv run python scripts/run_scrape.py anthropic databricks stripe  # scrape + store
+uv run python scripts/run_harmonize.py                          # role + location taxonomy
 uv run pytest                # run the test suite
 uv run ruff check . && uv run ruff format --check .
 ```
@@ -50,6 +51,22 @@ tests/           unit/ and integration/ tests; fixtures/ holds recorded ATS resp
 
 A posting is closed only when a **complete** fetch no longer lists it; failed or partial
 fetches never close anything. Run one scrape at a time per database.
+
+## Harmonization
+
+`harmonize` classifies every stored posting whose taxonomy version is missing or outdated. Results
+are deterministic, with spaCy phrase rules and a gazetteer kept in `src/jobsignal/harmonization/data/`.
+
+| Dimension | Values |
+|-----------|--------|
+| Role family (16) | software_engineering, ml_research, data, solutions_engineering, security, product_management, program_management, design, sales, customer_success, marketing, operations, finance, legal, people, other |
+| Seniority (7) | intern, entry, mid, senior, staff_plus, manager, director_plus (no signal → mid) |
+| Location | `kind\|country\|region\|city` with ISO 3166 codes; kinds city / region / country / remote; a posting can have many |
+
+Accuracy is gated in CI on hand-labelled real data. Titles score ≥90% on family and seniority, and
+locations score ≥95%. A 25% holdout split is reported separately.
+Unresolvable places are reported and never guessed. Editing a rule file requires bumping
+`TAXONOMY_VERSION`, and CI enforces this. A bumped version reprocesses every posting.
 
 ## Configuration
 

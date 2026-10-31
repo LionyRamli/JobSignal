@@ -1,0 +1,183 @@
+# Role-family phrases. Title phrases decide; the longest match wins (ties: earliest in title).
+# Department phrases are used only when no title phrase matches.
+# Matching is case-insensitive on spaCy tokens. Bump TAXONOMY_VERSION after any change.
+
+[families.software_engineering]
+title = [
+  "software engineer", "software engineers", "software engineering", "software developer",
+  "software development engineer", "developer", "backend engineer", "back-end engineer",
+  "frontend engineer", "front-end engineer", "front end engineer", "full stack engineer",
+  "full-stack engineer", "fullstack engineer", "mobile engineer", "ios engineer",
+  "android engineer", "infrastructure engineer", "platform engineer", "site reliability engineer",
+  "sre", "devops engineer", "systems engineer", "distributed systems", "production engineer",
+  "release engineer", "build engineer", "reliability engineer", "network engineer",
+  "firmware engineer", "hardware engineer", "compiler engineer", "performance engineer",
+  "kernel engineer", "qa engineer", "test engineer", "quality engineer", "engineering manager",
+  "engineering managers", "tech lead", "technical lead", "engineering lead", "engineer",
+  "engineers", "engineering", "member of technical staff", "it engineer", "it support",
+  "systems administrator", "database engineer", "storage engineer", "observability",
+  "infrastructure", "cloud engineer", "inference engineer", "systems architect",
+]
+department = [
+  "engineering", "software engineering", "engineering - pipeline", "infrastructure", "compute",
+  "platform", "engineering & design - product", "it",
+]
+
+[families.ml_research]
+title = [
+  "research engineer", "research engineers", "research scientist", "research scientists",
+  "researcher", "research", "machine learning", "ml engineer", "ml", "ai researcher",
+  "applied scientist", "interpretability", "alignment", "pretraining", "pre-training",
+  "reinforcement learning", "rl", "model behavior", "model welfare", "frontier red team",
+  "ai engineer", "llm", "deep learning", "computer vision", "nlp", "scientist",
+]
+department = ["ai research & engineering", "research", "ai research", "mosaic ai"]
+
+[families.data]
+title = [
+  "data scientist", "data scientists", "data science", "data engineer", "data engineering",
+  "data analyst", "analytics engineer", "analytics", "business intelligence", "bi analyst",
+  "data analytics", "data architect", "data platform", "data infrastructure", "economist",
+  "quantitative analyst", "statistician", "data",
+]
+department = ["data", "data science", "analytics"]
+
+[families.solutions_engineering]
+title = [
+  "solutions architect", "solutions architects", "solution architect", "solution architects",
+  "solutions engineer", "solutions engineers", "solution engineer", "sales engineer",
+  "sales engineers", "forward deployed engineer", "forward deployed engineers", "fde",
+  "field engineer", "field engineering", "field cto", "customer engineer",
+  "delivery solutions architect", "specialist solutions architect", "resident solutions architect",
+  "applied ai architect", "applied ai engineer", "ai architect", "architect", "architects",
+  "deployment strategist", "technical deployment lead", "deployment lead", "implementation",
+  "implementation engineer", "professional services", "consultant", "technical consultant",
+  "solutions consultant", "delivery architect", "delivery manager", "delivery lead",
+  "solutions architecture", "specialist solutions architecture", "applied ai architecture",
+  "applied ai engineering", "applied ai", "forward deployed engineering", "partner engineer",
+  "partner solutions engineer", "engagement manager",
+  "technical solutions", "integration engineer", "pre-sales", "presales",
+]
+department = [
+  "field engineering", "professional services", "professional services operations",
+  "delivery solutions architects", "applied ai", "field engineering - other",
+  "field engineering - fe direct regulated", "field engineering - fe direct enterprise",
+  "executive engineering - pipeline", "solutions",
+]
+
+[families.security]
+title = [
+  "security engineer", "security engineers", "security", "security analyst",
+  "threat intelligence", "threat", "detection", "incident response", "appsec",
+  "application security", "offensive security", "red team", "trust and safety",
+  "trust & safety", "safeguards", "fraud", "anti-abuse", "abuse", "investigator",
+  "vulnerability", "cryptography", "identity and access", "enforcement analyst", "grc",
+  "platform security", "security architect",
+]
+department = ["security", "safeguards (trust & safety)", "safeguards", "trust & safety"]
+
+[families.product_management]
+title = [
+  "product manager", "product managers", "group product manager", "product management",
+  "product lead", "product owner", "director of product", "head of product", "vp of product",
+  "vp, product", "product director", "technical product manager",
+]
+department = ["product", "product management"]
+
+[families.program_management]
+title = [
+  "program manager", "program managers", "technical program manager", "tpm",
+  "project manager", "program management", "project management", "program lead",
+  "programs", "pmo",
+]
+department = ["technical program management", "program management"]
+
+[families.design]
+title = [
+  "designer", "designers", "product designer", "design", "ux", "ui", "user experience",
+  "user researcher", "ux researcher", "design researcher", "brand designer", "content designer",
+  "design engineer", "creative director", "visual designer", "illustrator",
+]
+department = ["design", "product design", "ux"]
+
+[families.sales]
+title = [
+  "account executive", "account executives", "sales", "account manager", "account managers",
+  "business development", "business development representative", "bdr", "sdr",
+  "sales development", "sales development representative", "partner manager",
+  "partnerships", "partnership", "partner", "enterprise account", "strategic account",
+  "account director", "deal desk", "deal pricing", "pricing", "commercial", "channel",
+  "alliances", "alliance", "go-to-market", "gtm", "revenue", "hunter", "grower",
+  "account lead", "client partner", "sales director", "regional director", "country manager",
+  "industry lead", "industry director",
+]
+department = [
+  "sales", "enterprise sales", "account executives", "commercial sales", "partnerships",
+  "business development", "sales development", "strategic sales", "mid-market sales",
+  "product sales", "startups",
+]
+
+[families.customer_success]
+title = [
+  "customer success", "customer success manager", "technical account manager", "tam",
+  "support engineer", "support engineers", "technical support", "customer support",
+  "support specialist", "support", "customer experience", "onboarding", "product support",
+  "customer advocate", "escalation", "customer operations", "user operations",
+]
+department = ["support", "customer success", "customer support", "product support"]
+
+[families.marketing]
+title = [
+  "marketing", "product marketing", "marketing manager", "growth", "communications", "comms",
+  "brand", "content", "events", "event", "demand generation", "public relations", "pr",
+  "developer relations", "devrel", "developer advocate", "community", "social media",
+  "copywriter", "writer", "editorial", "creative", "field marketing", "lifecycle",
+  "communications manager", "internal communications",
+]
+department = ["marketing", "marketing & brand", "communications", "brand"]
+
+[families.operations]
+title = [
+  "operations", "business operations", "bizops", "strategy", "strategy and operations",
+  "strategy & operations", "chief of staff", "gtm operations", "revenue operations",
+  "sales operations", "procurement", "workplace", "facilities", "real estate", "logistics",
+  "supply chain", "vendor", "enablement", "sales enablement", "strategist", "planning",
+  "business analyst", "program operations", "administrator", "executive assistant",
+  "research operations", "risk operations", "infrastructure operations", "demand planning",
+  "business systems", "business systems analyst",
+  "executive business partner", "office manager", "coordinator",
+]
+department = [
+  "operations", "global operations", "business operations", "strategy", "hq management",
+  "product management, support, & operations", "workplace", "g&a",
+]
+
+[families.finance]
+title = [
+  "finance", "accounting", "accountant", "controller", "tax", "treasury", "fp&a",
+  "financial", "payroll", "revenue accounting", "corporate development", "investor relations",
+  "audit", "auditor", "billing", "accounts payable", "accounts receivable", "financial analyst",
+  "finance manager", "cfo", "capital markets", "corporate finance", "legal entity",
+]
+department = ["finance", "accounting", "finance & accounting"]
+
+[families.legal]
+title = [
+  "counsel", "legal", "attorney", "lawyer", "paralegal", "privacy", "compliance",
+  "regulatory", "policy", "public policy", "government affairs", "contracts", "commercial counsel",
+  "general counsel", "product counsel", "ethics", "governance", "risk",
+]
+department = ["legal", "policy", "compliance", "public policy", "legal & compliance"]
+
+[families.people]
+title = [
+  "recruiter", "recruiters", "recruiting", "talent", "talent acquisition", "people",
+  "people partner", "hr", "human resources", "hrbp", "total rewards", "compensation",
+  "benefits", "learning and development", "learning & development", "sourcer",
+  "people operations", "people ops", "employee experience", "dei", "diversity",
+]
+department = ["people", "recruiting", "talent", "human resources", "people & culture"]
+
+[families.other]
+title = []
+department = []

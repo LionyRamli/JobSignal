@@ -16,7 +16,8 @@ htmlcov/
 .env
 *.db
 *.sqlite3
-data/
+# scraper JSONL output; anchored: an unanchored data/ also hid src/**/data package files
+/data/
 logs/
 
 # Editors / OS

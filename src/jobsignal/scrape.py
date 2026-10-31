@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import TextIO
 
 import httpx
-from sqlalchemy import Engine, inspect
+from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -25,7 +25,7 @@ from jobsignal.extraction.greenhouse import GreenhouseSource
 from jobsignal.extraction.http_client import HttpClient
 from jobsignal.extraction.rate_limit import RateLimiter
 from jobsignal.logger import setup_logging
-from jobsignal.storage.db import make_engine, make_session_factory
+from jobsignal.storage.db import make_engine, make_session_factory, schema_ready
 from jobsignal.storage.repository import (
     StaleSnapshotError,
     finish_run,
@@ -34,7 +34,7 @@ from jobsignal.storage.repository import (
     record_snapshot,
     start_run,
 )
-from jobsignal.storage.schema import Base, ScrapeRun
+from jobsignal.storage.schema import ScrapeRun
 
 logger = logging.getLogger(__name__)
 
@@ -48,11 +48,6 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument("--out", type=Path, default=None, help="also export postings as .jsonl")
     parser.add_argument("--log-level", default=None, help="overrides JOBSIGNAL_LOG_LEVEL")
     return parser.parse_args(argv)
-
-
-def _schema_ready(engine: Engine) -> bool:
-    existing = set(inspect(engine).get_table_names())
-    return set(Base.metadata.tables) <= existing
 
 
 def _now() -> datetime:
@@ -70,7 +65,7 @@ def main(
 
     engine = make_engine(args.db or get_settings().database_url)
     try:
-        if not _schema_ready(engine):
+        if not schema_ready(engine):
             logger.error("database schema missing; run: uv run alembic upgrade head")
             return EXIT_NO_SCHEMA
         return _scrape(companies, engine, args.out, transport, min_interval)

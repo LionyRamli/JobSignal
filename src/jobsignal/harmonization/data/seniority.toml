@@ -1,0 +1,33 @@
+# Seniority phrases (matched case-insensitively on spaCy tokens; "Sr." tokenizes as "sr" ".").
+# Precedence when several match: intern > director_plus > manager > staff_plus > senior > entry > mid.
+# Bump TAXONOMY_VERSION in taxonomy.py after any change.
+
+[levels]
+intern = ["intern", "interns", "internship", "co-op", "apprentice", "apprenticeship"]
+entry = ["new grad", "new graduate", "junior", "jr", "entry level", "entry-level",
+         "early career", "graduate", "associate"]
+mid = []
+senior = ["senior", "sr", "lead"]
+staff_plus = ["staff", "staff+", "principal", "distinguished", "fellow"]
+manager = ["manager", "managers", "team lead", "engineering manager"]
+director_plus = ["director", "head of", "head", "vp", "vice president", "svp", "evp",
+                 "chief", "cto", "cfo", "ceo", "coo", "cmo", "cio", "ciso", "managing director"]
+
+# Spans inside which seniority words are NOT seniority: IC "manager" roles and titles that
+# merely contain a seniority word ("Account Executive", "Chief of Staff", "Staff Accountant").
+[ic_manager]
+phrases = [
+  "product manager", "product managers", "group product manager", "program manager",
+  "technical program manager", "project manager", "account manager", "technical account manager",
+  "partner manager", "partnerships manager", "customer success manager", "marketing manager",
+  "product marketing manager", "field marketing manager", "community manager", "content manager",
+  "event manager", "events manager", "campaign manager", "channel manager", "alliance manager",
+  "alliances manager", "relationship manager", "client manager", "office manager",
+  "category manager", "solutions manager", "release manager", "case manager",
+  "account executive", "account executives", "executive assistant", "executive business partner",
+  "chief of staff", "member of technical staff", "staff accountant", "management consultant",
+  "product management", "program management", "project management", "risk management",
+  "account management", "product lead", "lead generation", "partner development manager",
+  "business development manager", "pricing manager", "deal desk manager",
+  "communications manager", "engagement manager", "operations manager", "delivery manager",
+]

@@ -1,0 +1,202 @@
+company,title,department,family,seniority,split
+anthropic,"Data Engineer, Billing & Payments",Data Science & Analytics,data,mid,tune
+stripe,Data Scientist,Global Operations,data,mid,tune
+databricks,"Staff Partner Engineer, AI Partnerships",Product,solutions_engineering,staff_plus,tune
+anthropic,"Program Manager, Safeguards Workforce Operations",Safeguards (Trust & Safety),program_management,mid,tune
+stripe,"Program Manager, GTM Strategic Programs",1520 Sales Operations (SS&O),program_management,mid,tune
+anthropic,"Audit, Security GRC",Security,security,mid,tune
+anthropic,"Head of Community, Enterprise Marketing",Marketing & Brand,marketing,director_plus,holdout
+stripe,Account Executive - Velocity SMB Grower,1185 Account Executives (EMEA),sales,mid,tune
+anthropic,Hardware Systems Architect,Hardware,software_engineering,mid,tune
+stripe,"Enterprise Account Executive, Revenue Suite (Grower)",1643 Product Sales - Billing,sales,mid,tune
+databricks,Staff Software Engineer - GenAI inference,Engineering - Pipeline,software_engineering,staff_plus,tune
+anthropic,"Enterprise Account Executive, Public Sector, DACH",Sales,sales,mid,tune
+databricks,"Lakebase Sales Specialist, Associate Director (Germany)",HQ Management,sales,director_plus,tune
+stripe,"Senior Brand Designer, Experiential",8113 Brand Studio,design,senior,tune
+stripe,"Account Executive, Product Sales - Billing",1644 Product Sales - Prime Billing,sales,mid,holdout
+stripe,Sales Manager - Brazil,1170 GEO Sales HQ (NA),sales,manager,holdout
+databricks,Solutions Architect,Field Engineering - Other,solutions_engineering,mid,tune
+databricks,"Digital Native Account Executive, Thailand",Enterprise Sales,sales,mid,holdout
+stripe,Fraud Strategist,3130 Credit Risk Strategy,security,mid,tune
+stripe,Partner Solutions Architecture Manager,1150 Solutions Architecture,solutions_engineering,manager,holdout
+anthropic,"Supply Chain Delivery Manager, Data Center Power & Cooling OFE",Compute,operations,mid,tune
+databricks,"Sr. Designated Support Engineer, Apache Spark™",Support,customer_success,senior,tune
+stripe,Core Business Recruiter (Fixed Term Contract),6520 Recruiting,people,mid,tune
+anthropic,"Recruiter, G&A (Policy)",People,people,mid,holdout
+stripe,"Account Executive, Product - Link: Bank Payments & Open Banking",1640 Product Sales - Payments,sales,mid,tune
+anthropic,"Manager Applied AI Architecture, Healthcare & Life Sciences",Applied AI,solutions_engineering,manager,tune
+anthropic,Senior Partner Account Manager –Global Systems Integrator Alliances,Sales,sales,senior,holdout
+anthropic,"Solutions Marketing Manager, Emerging Industries",Marketing & Brand,marketing,mid,tune
+databricks,Forward Deployed Engineering - Senior Architect,Professional Services Operations,solutions_engineering,senior,tune
+databricks,Sr. Solutions Architect,Field Engineering - Other,solutions_engineering,senior,tune
+databricks,"Director, Travel & Expense",Finance,finance,director_plus,tune
+anthropic,"Product Designer, Growth",Engineering & Design - Product,design,mid,holdout
+stripe,"Startup Products Strategy & Operations, Insights & Analytics",3710 Startup Product,operations,mid,holdout
+anthropic,"Product Management, Human Data Platform","Product Management, Support, & Operations",product_management,mid,tune
+anthropic,"Program Manager, Accounting Operations & Strategy",Finance,program_management,mid,holdout
+stripe,"Account Executive, Velocity Scaled Grower (Italian or Spanish fluency)",1185 Account Executives (EMEA),sales,mid,tune
+databricks,"Account Executive, Commercial - Hunter",Enterprise Sales,sales,mid,holdout
+databricks,"Product Finance Director, AI Products & GPU Investment Strategy",Finance,finance,director_plus,tune
+stripe,Third Party Risk Analyst,6427 Procurement,legal,mid,tune
+anthropic,"Data Science Tech Lead Manager, Model Experience",Data Science & Analytics,data,manager,tune
+stripe,"Data Analyst, Global Growth",7112 Data Science,data,mid,tune
+databricks,"Staff Software Engineer, Agent Quality",Engineering - Pipeline,software_engineering,staff_plus,tune
+databricks,"Sr. Manager, Field Engineering",Field Engineering - FE Direct Emerging,solutions_engineering,manager,tune
+anthropic,"Staff Software Engineer, Growth",Engineering & Design - Product,software_engineering,staff_plus,tune
+anthropic,"Staff Software Engineer, Finance Engineering",Finance,software_engineering,staff_plus,tune
+anthropic,"AV Engineer, Platform & Automation",Security,software_engineering,mid,holdout
+anthropic,Incident Response Manager - Product & Engineering,Technical Program Management,program_management,mid,tune
+databricks,Sr. Staff Software Engineer - Money Team,Engineering,software_engineering,staff_plus,tune
+anthropic,"Staff+ Software Engineer, Databases",Software Engineering - Infrastructure,software_engineering,staff_plus,tune
+anthropic,"Enterprise Account Executive, Industries - BFSI",Sales,sales,mid,tune
+stripe,Implementation Consultant (AUNZ),1142 APAC Delivery,solutions_engineering,mid,tune
+anthropic,"Research Operations Lead, Biology",AI Research & Engineering,operations,senior,tune
+stripe,Account Executive - Bridge,1642 Product Sales - MaaS,sales,mid,holdout
+databricks,Senior Software Engineer (App-Framework),Engineering - Pipeline,software_engineering,senior,tune
+databricks,Lakebase Sales Specialist,HQ Management,sales,mid,tune
+databricks,Sr. Forward Deployed Engineer - FDE (Fullstack),Professional Services Operations,solutions_engineering,senior,tune
+stripe,"Backend Engineer, Developer & End-user Experience Platform",8116 Developer Platform - Eng,software_engineering,mid,tune
+stripe,"Staff Product Manager, Billing",8412 Subscriptions,product_management,staff_plus,tune
+stripe,"Staff Software Engineer, High Availability and Disaster Recovery",8129 Global Networking,software_engineering,staff_plus,tune
+stripe,"Software Engineer, Secrets Infrastructure",8612 Security Infrastructure,software_engineering,mid,tune
+databricks,Engineering Manager - Core Experiences,Executive Engineering - Pipeline,software_engineering,manager,tune
+stripe,"Account Executive, Platforms Hunter (Spanish fluency)",1185 Account Executives (EMEA),sales,mid,tune
+stripe,Legal Entity Controller,4203 BFin - Accounting (SDC),finance,mid,tune
+databricks,Sr. Forward Deployed Engineer (FDE) - Digital Native Business,Professional Services Operations,solutions_engineering,senior,tune
+anthropic,APAC Tax Lead,Finance,finance,senior,tune
+databricks,Sr. Forward Deployed Engineer,Professional Services Operations,solutions_engineering,senior,holdout
+databricks,Sr. Forward Deployed Engineer (FDE) - Financial Services,Professional Services Operations,solutions_engineering,senior,tune
+stripe,Account Executive - Platforms Hunter (French Fluency),1185 Account Executives (EMEA),sales,mid,tune
+stripe,"Engineering Manager, Machine Learning - Credit Risk",8535 Risk Credit & Fraud,software_engineering,manager,tune
+anthropic,"Data Scientist, Safeguards",Data Science & Analytics,data,mid,tune
+databricks,"Manager, Field Engineering (Specialist) - HCLS",Field Engineering - FE Direct Regulated,solutions_engineering,manager,tune
+stripe,Privacy Operations Program Manager,6311 Data Protection & Privacy,program_management,mid,holdout
+anthropic,"Product Manager (Technical), Product Support Experience","Product Management, Support, & Operations",product_management,mid,holdout
+databricks,Applied AI Engineer,Engineering - Pipeline,solutions_engineering,mid,tune
+databricks,Startup Hunter Account Executive,Enterprise Sales,sales,mid,tune
+anthropic,"Manager, Enterprise Sales - Hedge Funds",Sales,sales,manager,tune
+stripe,"Account Executive, Product - Local Payment Methods",1640 Product Sales - Payments,sales,mid,holdout
+databricks,"Sr. Manager, Sales Development",Sales Development,sales,manager,tune
+anthropic,"Manager, Applied AI Engineering (Megas)",Applied AI,solutions_engineering,manager,tune
+databricks,Staff Software Engineer - Backend,Engineering - Pipeline,software_engineering,staff_plus,tune
+anthropic,Recruiting Analytics Data Engineer,People,data,mid,tune
+stripe,Credit Risk Operations Associate,4168 SDC - Credit Operations,operations,entry,tune
+stripe,"Partner Solutions Engineer, Ecosystem",3510 CBO Admin,solutions_engineering,mid,tune
+stripe,Channel Sales Executive,1630 Alliances & Channels,sales,mid,holdout
+stripe,"Partner Development Manager, Global Strategic Alliances",1630 Alliances & Channels,sales,mid,tune
+databricks,Staff Software Engineer- Networking,Engineering - Pipeline,software_engineering,staff_plus,tune
+stripe,Capital Markets Investments,Global Operations,finance,mid,holdout
+databricks,Product Management Intern (Summer 2027),University Recruiting - Product,product_management,intern,tune
+anthropic,"Internal Communications Manager, Tech",Communications,marketing,mid,tune
+databricks,Accounting Data & Technology Manager,Finance,finance,manager,tune
+anthropic,"Manager, Cybersecurity Sales Specialist",Sales,sales,manager,tune
+stripe,"Full Stack Engineer, Enterprise & Ecosystem",8571 Ecosystem Product,software_engineering,mid,holdout
+anthropic,"Front End Engineer, Marketing",Engineering & Design - Product,software_engineering,mid,tune
+databricks,Sr. Forward Deployed Engineer,Professional Services Operations,solutions_engineering,senior,tune
+databricks,Delivery Solutions Architect,Delivery Solutions Architects,solutions_engineering,mid,tune
+stripe,"Product Designer, Terminal",8811 Product Design,design,mid,tune
+stripe,"Senior Designer, Brand Advertising",8113 Brand Studio,design,senior,holdout
+anthropic,"Safeguards Enforcement Analyst, Age-Appropriate Design",Safeguards (Trust & Safety),security,mid,holdout
+anthropic,"Applied AI Architect, Public Sector (Federal Civilan)",Applied AI,solutions_engineering,mid,tune
+stripe,"Solutions Architect, Enterprise, UK",1150 Solutions Architecture,solutions_engineering,mid,holdout
+anthropic,Pre-training Data Infrastructure Engineer,AI Research & Engineering,ml_research,mid,tune
+anthropic,Enterprise Account Executive - Retail / CPG / Trading,Sales,sales,mid,tune
+databricks,Sr. Forward Deployed Engineer (FDE) - Healthcare & Life Sciences,Professional Services Operations,solutions_engineering,senior,tune
+stripe,"Channel Sales Executive, SaaS Platforms",1630 Alliances & Channels,sales,mid,tune
+stripe,"Marketing Operations Manager, EMEA Events",2315 Marketing - Marketing Operations,marketing,mid,tune
+databricks,"Director, Marketing Strategy and AI Transformation",Marketing,marketing,director_plus,holdout
+databricks,Solutions Architect (Digital Native Business),Field Engineering - Other,solutions_engineering,mid,holdout
+databricks,Genie Global Sales Leader,Exec Sales,sales,director_plus,tune
+databricks,"Staff Product Manager, Serverless Workspaces",Product,product_management,staff_plus,tune
+anthropic,"Staff Software Engineer, AI Reliability",Software Engineering - Infrastructure,software_engineering,staff_plus,tune
+stripe,Recruiting Coordinator (Fixed-Term Contract),6523 Recruiting Enablement,people,mid,tune
+databricks,Startup Account Executive,Commercial & Mid-Market Sales,sales,mid,tune
+databricks,"Software Engineer, Infrastructure",Infrastructure,software_engineering,mid,tune
+stripe,"Administrative Business Partner, Office of the President",6220 Executive Operations,operations,mid,holdout
+stripe,"Account Executive, Enterprise Platforms, Tier 2 Grower",1652 Platforms - Account Executives (NA),sales,mid,holdout
+databricks,"Staff Software Engineer, Technical Lead, Lakebase Manager (LBM)",Engineering - Pipeline,software_engineering,staff_plus,tune
+anthropic,"Enforcement Analyst, Agentic Alignment",Safeguards (Trust & Safety),security,mid,tune
+databricks,Sr. Delivery Solutions Architect,Delivery Solutions Architects,solutions_engineering,senior,tune
+stripe,"Backend Engineer, Core Technology",8127 Core Infrastructure,software_engineering,mid,holdout
+stripe,"UX Research Manager, Payments",8812 UX Research,design,manager,tune
+stripe,Commercial Account Executive - Grower,1195 Account Executives (APAC),sales,mid,tune
+databricks,Sr. Staff Technical Program Manager - Reliability,Engineering - Pipeline,program_management,staff_plus,tune
+anthropic,AV Operations Specialist,Security,operations,mid,holdout
+anthropic,"Research Scientist, Life Sciences (Large Molecules, Process Development)",AI Research & Engineering,ml_research,mid,holdout
+databricks,"Staff Product Manager, Agentic AI Applications","Integration, Data, Engineering and Applications",product_management,staff_plus,tune
+anthropic,"Finance & Strategy, Deal Strategy",Finance,finance,mid,tune
+anthropic,"Customer Success Manager, Public Sector (National Security)",Sales,customer_success,mid,tune
+stripe,"Account Executive, SMB (Grower)",1651 Velocity - Account Executives (NA),sales,mid,holdout
+anthropic,"Technical Program Manager, Billing",Technical Program Management,program_management,mid,tune
+databricks,Staff Software Engineer - User Activation,Engineering - Pipeline,software_engineering,staff_plus,tune
+stripe,Enterprise Support Specialist,4119 Product Support,customer_success,mid,holdout
+databricks,"Sr. Recruiter, GTM – Field Engineering (Contract)",Recruiting,people,senior,holdout
+databricks,Senior Solutions Architect (Lakebase),Field Engineering - Other,solutions_engineering,senior,tune
+stripe,"Account Executive, Velocity Platforms (Hunter)",1652 Platforms - Account Executives (NA),sales,mid,tune
+stripe,"Program Manager, Competitive Programs",1520 Sales Operations (SS&O),program_management,mid,holdout
+anthropic,"Applied AI Architect,  Beneficial Deployments (Life Sciences Community & Enablement)",Applied AI,solutions_engineering,mid,tune
+stripe,Android BSP Engineer,8512 Terminal - Eng,software_engineering,mid,tune
+stripe,"Marketing Operations Manager, AMER Events",2315 Marketing - Marketing Operations,marketing,mid,tune
+databricks,"Staff Software Engineer, Ads Measurement & Orchestration",Engineering - Pipeline,software_engineering,staff_plus,tune
+anthropic,"Legal Program Manager, Compute & Infrastructure",Legal,program_management,mid,holdout
+databricks,Business Development Representative (UKI),Sales Development,sales,mid,tune
+databricks,Senior Solutions Architect (Transport),Field Engineering - Other,solutions_engineering,senior,tune
+anthropic,"Staff + Sr. Software Engineer, Cloud Inference Launch Engineering",Software Engineering - Infrastructure,software_engineering,staff_plus,tune
+anthropic,"Technical Program Manager, Inference",Technical Program Management,program_management,mid,tune
+stripe,"Sales Manager, SMB, UKI",1180 GEO Sales HQ (EMEA),sales,manager,holdout
+anthropic,"Applied AI Architect, Public Sector",Applied AI,solutions_engineering,mid,tune
+databricks,Software Engineer - Backend,Engineering - Pipeline,software_engineering,mid,holdout
+stripe,"Head of Money Management, Finance & Strategy",6453 MaaS F&S,finance,director_plus,holdout
+anthropic,"Senior Software Engineer, Inference",Software Engineering - Infrastructure,software_engineering,senior,holdout
+databricks,Solutions Architect,Field Engineering - Other,solutions_engineering,mid,tune
+databricks,"Manager, Developer Relations - Open Source",Product,marketing,manager,tune
+anthropic,"Sales Enablement Trainer, Claude Products",Sales,operations,mid,holdout
+anthropic,"Product Designer, Claude Developer Platform",Engineering & Design - Product,design,mid,holdout
+anthropic,"Staff Software Engineer, Environments Infrastructure",AI Research & Engineering,software_engineering,staff_plus,tune
+stripe,"Sales Development Representative, Thailand",1134 APAC Sales Development Reps,sales,mid,tune
+stripe,"Product Marketing Manager, Startup Segment",2317 Marketing - PMM,marketing,mid,tune
+stripe,"Account Executive, Product Sales (Terminal)",1640 Product Sales - Payments,sales,mid,holdout
+anthropic,"Enterprise Account Executive, Pharmaceuticals & Life Sciences",Sales,sales,mid,tune
+databricks,"Sr. Engagement Manager, FDE",Professional Services Operations,solutions_engineering,senior,tune
+anthropic,Enterprise Account Executive - FSI,Sales,sales,mid,tune
+anthropic,"Manager, Applied AI Architects - Digital Natives, EMEA",Applied AI,solutions_engineering,manager,tune
+databricks,"Sr. Engagement Manager, FDE",Professional Services Operations,solutions_engineering,senior,tune
+stripe,"Staff Software Engineer, Alloy Integrations",9014 Metronome - R&D,software_engineering,staff_plus,tune
+databricks,"Sr. Manager, AI Forward Deployed Engineering",Professional Services Operations,solutions_engineering,manager,tune
+anthropic,"Software Engineer, Staff: Applied AI, Science & Engineering",Engineering & Design - Product,software_engineering,staff_plus,holdout
+stripe,"Strategic Account Executive, Platforms",1185 Account Executives (EMEA),sales,mid,tune
+stripe,"Operations Associate, New Grad (Mexico)",4378 SDC - Fraud Operations,operations,entry,tune
+stripe,Product Designer - Dashboard,8811 Product Design,design,mid,tune
+databricks,"Manager, Field Engineering - Global Telecommunications",Field Engineering - FE Direct Enterprise,solutions_engineering,manager,tune
+databricks,"Manager, Field Engineering France",Field Engineering - Other,solutions_engineering,manager,tune
+databricks,Solutions Architect Israel,Field Engineering - Other,solutions_engineering,mid,holdout
+anthropic,"AI Infrastructure Operations, Demand Planning",Software Engineering - Infrastructure,operations,mid,tune
+anthropic,"Engineering Manager, Hardware Platform Security",Security,security,manager,tune
+databricks,"Program Analyst, Legal Ops",Legal,legal,mid,holdout
+anthropic,"Staff+ Software Engineer, Enterprise (Platform)",Engineering & Design - Product,software_engineering,staff_plus,tune
+stripe,"Program Manager, GTM Planning",1520 Sales Operations (SS&O),program_management,mid,tune
+stripe,"Specialist Solutions Architecture, Link",1154 Specialized Solutions Architecture,solutions_engineering,mid,tune
+stripe,"Account Executive, Commercial Hunter, AUNZ",1195 Account Executives (APAC),sales,mid,holdout
+databricks,Solutions Architect Digital Natives & Scaleups Italy,Field Engineering - Other,solutions_engineering,mid,tune
+stripe,Portfolio Pricing Strategist,6447 Product Pricing,operations,mid,holdout
+anthropic,"Applied AI Architect, Strategic Enterprise Tech",Applied AI,solutions_engineering,mid,tune
+anthropic,Applied AI Security Architect - Healthcare & Life Sciences,Applied AI,solutions_engineering,mid,tune
+databricks,"Product Manager, New Grad (2027) - Belgrade",University Recruiting - Product,product_management,entry,holdout
+anthropic,"Business Systems Analyst, GTM Systems",Engineering & Design - Product,operations,mid,tune
+anthropic,"Applied AI Architect, Partnerships",Applied AI,solutions_engineering,mid,tune
+anthropic,"Data Scientist, Product",Data Science & Analytics,data,mid,holdout
+anthropic,"Enterprise Account Executive, Automotive",Sales,sales,mid,tune
+databricks,"Director, Field Engineering",Field Engineering - Other,solutions_engineering,director_plus,tune
+stripe,"Account Executive, Startups (Grower)",1653 Startups - Account Executives (NA),sales,mid,tune
+databricks,Senior Software Engineer - Database Engine Internals,Engineering - Pipeline,software_engineering,senior,tune
+anthropic,Applied AI Architect,Applied AI,solutions_engineering,mid,tune
+databricks,"Director, Enterprise",Enterprise Sales,sales,director_plus,tune
+databricks,"Strategic Core Account Executive, Petrobras (Rio de Janeiro)",Enterprise Sales,sales,mid,tune
+stripe,"Solutions Engineer, AI Build Team",1650 AI GTM Strategy & Solutions,solutions_engineering,mid,tune
+databricks,Senior Staff Applied AI Engineer - Context Retrieval,Engineering,solutions_engineering,staff_plus,tune
+databricks,Sr. Solutions Architect - FSI,Field Engineering - Other,solutions_engineering,senior,holdout
+anthropic,"Policy Communications Manager, Responsible Scaling, Security, and Governance",Communications,marketing,mid,tune
+databricks,PhD GenAI Research Scientist Intern,University Recruiting - Engineering,ml_research,intern,tune
+stripe,Product Manager: New Grad Accelerator,5112 General University,product_management,entry,tune
+stripe,Finance & Strategy Analyst,6441 Corporate F&S,finance,mid,tune
+anthropic,"Applied AI Engineer, Enterprise",Applied AI,solutions_engineering,mid,tune
