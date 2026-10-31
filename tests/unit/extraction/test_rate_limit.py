@@ -59,3 +59,11 @@ def test_zero_interval_never_sleeps(clock):
 def test_negative_interval_rejected(clock):
     with pytest.raises(ValueError, match="min_interval"):
         make_limiter(clock, interval=-1)
+
+
+def test_short_remaining_wait_is_still_honoured(clock):
+    limiter = make_limiter(clock)
+    limiter.wait("h")
+    clock.advance(1.9)
+    limiter.wait("h")
+    assert clock.sleeps == [pytest.approx(0.1)]
