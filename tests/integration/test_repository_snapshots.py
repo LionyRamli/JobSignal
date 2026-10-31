@@ -5,6 +5,7 @@ from sqlalchemy import func, select
 
 from jobsignal.models import Posting
 from jobsignal.storage.repository import (
+    StaleSnapshotError,
     get_or_create_company,
     open_postings,
     record_failed_snapshot,
@@ -120,7 +121,7 @@ def test_failed_snapshot_closes_nothing(session, company):
     assert all(record(session, company, i).last_seen_at == T1 for i in ["a", "b"])
     assert (failed.status, failed.posting_count, failed.error_type) == (
         "failed",
-        0,
+        None,  # not 0: a failed fetch must not read as "zero openings"
         "RetryExhaustedError",
     )
     assert membership_count(session) == 2
@@ -176,3 +177,28 @@ def test_large_snapshot_round_trip(session, company):
 
     assert len(open_postings(session, company)) == 2000
     assert membership_count(session) == 4500
+
+
+def test_incomplete_snapshot_upserts_seen_but_closes_nothing(session, company):
+    snap(session, company, ["a", "b"], T1)
+    run = start_run(session, T2)
+    snapshot = record_snapshot(
+        session, run, company, [posting("a", fetched_at=T2)], T2, complete=False
+    )
+    session.commit()
+
+    assert (snapshot.status, snapshot.posting_count) == ("partial", 1)
+    assert [p.external_id for p in open_postings(session, company)] == ["a", "b"]
+    assert record(session, company, "a").last_seen_at == T2
+    assert record(session, company, "b").last_seen_at == T1
+
+
+def test_out_of_order_snapshot_is_rejected_and_changes_nothing(session, company):
+    snap(session, company, ["a", "b"], T2)
+    run = start_run(session, T1)
+    with pytest.raises(StaleSnapshotError):
+        record_snapshot(session, run, company, [posting("a", fetched_at=T1)], T1)
+    session.rollback()
+
+    row_a, row_b = record(session, company, "a"), record(session, company, "b")
+    assert (row_a.last_seen_at, row_b.closed_at) == (T2, None)

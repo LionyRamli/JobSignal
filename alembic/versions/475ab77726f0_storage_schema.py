@@ -1,8 +1,8 @@
 """storage schema
 
-Revision ID: ca6002499df8
+Revision ID: 475ab77726f0
 Revises: 855824a0b4e1
-Create Date: 2026-11-01 00:29:40.582449
+Create Date: 2026-11-01 00:52:43.525389
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "ca6002499df8"
+revision: str = "475ab77726f0"
 down_revision: str | Sequence[str] | None = "855824a0b4e1"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -76,9 +76,11 @@ def upgrade() -> None:
         sa.Column("company_id", sa.Integer(), nullable=False),
         sa.Column("fetched_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("status", sa.String(length=16), nullable=False),
-        sa.Column("posting_count", sa.Integer(), nullable=False),
+        sa.Column("posting_count", sa.Integer(), nullable=True),
         sa.Column("error_type", sa.String(length=64), nullable=True),
-        sa.CheckConstraint("status IN ('ok', 'failed')", name=op.f("ck_snapshots_status")),
+        sa.CheckConstraint(
+            "status IN ('ok', 'partial', 'failed')", name=op.f("ck_snapshots_status")
+        ),
         sa.ForeignKeyConstraint(
             ["company_id"], ["companies.id"], name=op.f("fk_snapshots_company_id_companies")
         ),

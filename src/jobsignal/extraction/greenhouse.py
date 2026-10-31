@@ -13,7 +13,7 @@ from typing import Any
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, ValidationError
 
-from jobsignal.extraction.base import ATSSource
+from jobsignal.extraction.base import ATSSource, FetchResult
 from jobsignal.extraction.errors import InvalidPayloadError
 from jobsignal.extraction.http_client import HttpClient
 from jobsignal.models import Posting
@@ -61,7 +61,7 @@ class GreenhouseSource(ATSSource):
         self._http = http
         self._clock = clock
 
-    def fetch_postings(self, company: str) -> list[Posting]:
+    def fetch(self, company: str) -> FetchResult:
         if not BOARD_TOKEN_RE.fullmatch(company):
             raise ValueError(f"invalid Greenhouse board token: {company!r}")
 
@@ -77,6 +77,7 @@ class GreenhouseSource(ATSSource):
         fetched_at = self._clock()
         postings: list[Posting] = []
         seen: set[str] = set()
+        skipped = 0
         for department in payload.departments:
             if department.jobs is None:
                 logger.warning(
@@ -84,19 +85,26 @@ class GreenhouseSource(ATSSource):
                     company,
                     department.id,
                 )
+                skipped += 1
                 continue
             department_name = None if department.id == NO_DEPARTMENT_ID else department.name
             for job in department.jobs:
                 posting = self._to_posting(job, company, department_name, fetched_at)
-                if posting is None or posting.external_id in seen:
+                if posting is None:
+                    skipped += 1
+                    continue
+                if posting.external_id in seen:
                     continue
                 seen.add(posting.external_id)
                 postings.append(posting)
 
         logger.info(
-            "fetch finished source=greenhouse company=%s postings=%d", company, len(postings)
+            "fetch finished source=greenhouse company=%s postings=%d skipped=%d",
+            company,
+            len(postings),
+            skipped,
         )
-        return postings
+        return FetchResult(postings, skipped)
 
     def _to_posting(
         self, job: Any, company: str, department: str | None, fetched_at: datetime

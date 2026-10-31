@@ -77,7 +77,7 @@ def test_foreign_keys_enforced(session):
 
 def test_status_vocabularies_are_exact():
     assert RUN_STATUSES == ("running", "succeeded", "partial", "failed")
-    assert SNAPSHOT_STATUSES == ("ok", "failed")
+    assert SNAPSHOT_STATUSES == ("ok", "partial", "failed")
 
 
 @pytest.mark.parametrize("status", RUN_STATUSES)
@@ -124,3 +124,9 @@ def test_column_lengths_come_from_model_limits():
     assert columns.title.type.length == TITLE_MAX
     assert columns.department.type.length == DEPARTMENT_MAX
     assert columns.external_id.type.length == EXTERNAL_ID_MAX
+
+
+def test_failed_snapshot_may_have_null_posting_count(session):
+    run = ScrapeRun(started_at=NOW, status="running")
+    session.add(Snapshot(run=run, company=company(), fetched_at=NOW, status="failed"))
+    session.flush()

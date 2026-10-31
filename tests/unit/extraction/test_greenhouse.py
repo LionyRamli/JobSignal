@@ -234,3 +234,26 @@ def test_department_with_null_jobs_is_skipped_others_kept():
     payload["departments"][0]["jobs"] = None  # holds 2 of the 6 jobs
     source, _ = source_for(payload)
     assert len(source.fetch_postings("anthropic")) == 4
+
+
+def test_fetch_reports_complete_board():
+    source, _ = source_for(load("departments_anthropic.json"))
+    result = source.fetch("anthropic")
+    assert (len(result.postings), result.skipped, result.complete) == (6, 0, True)
+
+
+@pytest.mark.parametrize(
+    "break_payload",
+    [
+        lambda p: p["departments"][0].__setitem__("jobs", None),
+        lambda p: p["departments"][0]["jobs"].insert(0, None),
+        lambda p: p["departments"][0]["jobs"][0].__setitem__("absolute_url", "javascript:x"),
+    ],
+)
+def test_fetch_reports_incomplete_board(break_payload):
+    payload = load("departments_anthropic.json")
+    break_payload(payload)
+    source, _ = source_for(payload)
+    result = source.fetch("anthropic")
+    assert result.complete is False
+    assert result.skipped >= 1

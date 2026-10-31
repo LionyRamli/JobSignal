@@ -6,7 +6,7 @@ Functions take a Session and never commit: the caller owns transaction boundarie
 
 from datetime import datetime
 
-from sqlalchemy import insert, select
+from sqlalchemy import func, insert, select
 from sqlalchemy.orm import Session
 
 from jobsignal.models import Posting
@@ -17,6 +17,10 @@ from jobsignal.storage.schema import (
     Snapshot,
     snapshot_postings,
 )
+
+
+class StaleSnapshotError(Exception):
+    """A snapshot older than the company's latest recorded one (overlapping runs)."""
 
 
 def get_or_create_company(
@@ -44,9 +48,10 @@ def finish_run(session: Session, run: ScrapeRun, now: datetime) -> ScrapeRun:
     session.flush()
     statuses = session.scalars(select(Snapshot.status).where(Snapshot.run_id == run.id)).all()
     ok = sum(status == "ok" for status in statuses)
+    partial = sum(status == "partial" for status in statuses)
     if statuses and ok == len(statuses):
         run.status = "succeeded"
-    elif ok == 0:
+    elif ok == 0 and partial == 0:
         run.status = "failed"
     else:
         run.status = "partial"
@@ -61,8 +66,13 @@ def record_snapshot(
     company: Company,
     postings: list[Posting],
     fetched_at: datetime,
+    complete: bool = True,
 ) -> Snapshot:
     """Record a successful fetch of ``company``'s board.
+
+    ``complete=False`` (the source skipped malformed entries) records a ``partial``
+    snapshot: seen postings are upserted and linked, but absent ones are NOT closed.
+    Raises StaleSnapshotError if ``fetched_at`` predates the company's latest snapshot.
 
     Fetched postings are upserted (latest fields win), marked seen at ``fetched_at``, reopened
     if they had been closed, and linked to the snapshot. Open postings of this company that were
@@ -74,6 +84,17 @@ def record_snapshot(
                 f"posting {posting.external_id!r} ({posting.source}/{posting.company}) "
                 f"does not belong to {company.source}/{company.board_token}"
             )
+    latest = session.scalar(
+        select(func.max(Snapshot.fetched_at)).where(
+            Snapshot.company_id == company.id, Snapshot.status.in_(("ok", "partial"))
+        )
+    )
+    if latest is not None and fetched_at < latest:
+        raise StaleSnapshotError(
+            f"{company.source}/{company.board_token}: snapshot at {fetched_at.isoformat()} "
+            f"is older than the latest one at {latest.isoformat()}"
+        )
+
     fetched: dict[str, Posting] = {}
     for posting in postings:
         fetched.setdefault(posting.external_id, posting)  # first occurrence wins
@@ -103,12 +124,18 @@ def record_snapshot(
         seen.append(row)
 
     # Closing in Python (rows already loaded) avoids SQLite's bound-parameter limit on NOT IN.
-    for external_id, row in existing.items():
-        if external_id not in fetched and row.closed_at is None:
-            row.closed_at = fetched_at
+    # Only a complete fetch proves absence.
+    if complete:
+        for external_id, row in existing.items():
+            if external_id not in fetched and row.closed_at is None:
+                row.closed_at = fetched_at
 
     snapshot = Snapshot(
-        run=run, company=company, fetched_at=fetched_at, status="ok", posting_count=len(fetched)
+        run=run,
+        company=company,
+        fetched_at=fetched_at,
+        status="ok" if complete else "partial",
+        posting_count=len(fetched),
     )
     session.add(snapshot)
     session.flush()
@@ -129,7 +156,7 @@ def record_failed_snapshot(
         company=company,
         fetched_at=fetched_at,
         status="failed",
-        posting_count=0,
+        posting_count=None,
         error_type=error_type[:64],
     )
     session.add(snapshot)

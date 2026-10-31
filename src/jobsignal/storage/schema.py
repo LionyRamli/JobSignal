@@ -33,7 +33,7 @@ NAMING_CONVENTION = {
 }
 
 RUN_STATUSES = ("running", "succeeded", "partial", "failed")
-SNAPSHOT_STATUSES = ("ok", "failed")
+SNAPSHOT_STATUSES = ("ok", "partial", "failed")
 
 
 def _in(column: str, values: tuple[str, ...]) -> str:
@@ -88,7 +88,7 @@ class Snapshot(Base):
     company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
     fetched_at: Mapped[datetime] = mapped_column(UTCDateTime)
     status: Mapped[str] = mapped_column(String(16))
-    posting_count: Mapped[int]
+    posting_count: Mapped[int | None]  # NULL when failed: never read as 0 openings
     error_type: Mapped[str | None] = mapped_column(String(64))
 
     run: Mapped[ScrapeRun] = relationship(back_populates="snapshots")

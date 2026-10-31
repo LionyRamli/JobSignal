@@ -16,6 +16,8 @@ from typing import TextIO
 
 import httpx
 from sqlalchemy import Engine, inspect
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from jobsignal.config import get_settings
 from jobsignal.extraction.errors import ExtractionError
@@ -25,13 +27,14 @@ from jobsignal.extraction.rate_limit import RateLimiter
 from jobsignal.logger import setup_logging
 from jobsignal.storage.db import make_engine, make_session_factory
 from jobsignal.storage.repository import (
+    StaleSnapshotError,
     finish_run,
     get_or_create_company,
     record_failed_snapshot,
     record_snapshot,
     start_run,
 )
-from jobsignal.storage.schema import Base
+from jobsignal.storage.schema import Base, ScrapeRun
 
 logger = logging.getLogger(__name__)
 
@@ -97,30 +100,47 @@ def _scrape(
         session.commit()
         source = GreenhouseSource(http)
 
-        for token in companies:
-            try:
-                postings = source.fetch_postings(token)
-            except ValueError as exc:  # invalid board token: never becomes a company row
-                logger.error("company=%r rejected: %s", token, exc)
-                failed.append(token)
-                continue
-            except ExtractionError as exc:
-                logger.error("company=%r failed: %s: %s", token, type(exc).__name__, exc)
-                company = get_or_create_company(session, source.name, token, _now())
-                record_failed_snapshot(session, run, company, type(exc).__name__, _now())
-                session.commit()
-                failed.append(token)
-                continue
+        try:
+            for token in companies:
+                try:
+                    result = source.fetch(token)
+                except ValueError as exc:  # invalid board token: never becomes a company row
+                    logger.error("company=%r rejected: %s", token, exc)
+                    failed.append(token)
+                    continue
+                except ExtractionError as exc:
+                    logger.error("company=%r failed: %s: %s", token, type(exc).__name__, exc)
+                    _record_failure(session, run, source.name, token, type(exc).__name__)
+                    failed.append(token)
+                    continue
 
-            company = get_or_create_company(session, source.name, token, _now())
-            fetched_at = postings[0].fetched_at if postings else _now()
-            snapshot = record_snapshot(session, run, company, postings, fetched_at)
-            session.commit()
-            _export(sink, postings)
-            total += snapshot.posting_count
+                try:
+                    company = get_or_create_company(session, source.name, token, _now())
+                    postings = result.postings
+                    fetched_at = postings[0].fetched_at if postings else _now()
+                    snapshot = record_snapshot(
+                        session, run, company, postings, fetched_at, complete=result.complete
+                    )
+                    session.commit()
+                except (SQLAlchemyError, StaleSnapshotError) as exc:
+                    session.rollback()
+                    logger.error("company=%r not stored: %s: %s", token, type(exc).__name__, exc)
+                    _record_failure(session, run, source.name, token, type(exc).__name__)
+                    failed.append(token)
+                    continue
 
-        finish_run(session, run, _now())
-        session.commit()
+                _export(sink, postings)
+                total += snapshot.posting_count or 0
+                if not result.complete:
+                    logger.error(
+                        "company=%r incomplete: %d entries skipped; nothing closed",
+                        token,
+                        result.skipped,
+                    )
+                    failed.append(token)
+        finally:
+            _finish(session, run)  # also on Ctrl-C / unexpected errors: no zombie 'running' runs
+
         logger.info(
             "scrape finished run_id=%d status=%s companies=%d failed=%d postings=%d",
             run.id,
@@ -130,6 +150,29 @@ def _scrape(
             total,
         )
     return EXIT_COMPANY_FAILED if failed else EXIT_OK
+
+
+def _record_failure(
+    session: Session, run: ScrapeRun, source: str, token: str, error_type: str
+) -> None:
+    """Best effort: a failed snapshot for ``token``; never raises a DB error itself."""
+    try:
+        company = get_or_create_company(session, source, token, _now())
+        record_failed_snapshot(session, run, company, error_type, _now())
+        session.commit()
+    except SQLAlchemyError:
+        session.rollback()
+        logger.exception("could not record failed snapshot company=%r", token)
+
+
+def _finish(session: Session, run: ScrapeRun) -> None:
+    try:
+        session.rollback()  # discard any half-written company work
+        finish_run(session, run, _now())
+        session.commit()
+    except SQLAlchemyError:
+        session.rollback()
+        logger.exception("could not finish run_id=%s", run.id)
 
 
 def _export(sink: TextIO | None, postings: list) -> None:

@@ -42,6 +42,8 @@ def test_start_run_is_running(session):
         (["ok", "ok"], "succeeded"),
         (["ok", "failed"], "partial"),
         (["failed", "failed"], "failed"),
+        (["partial"], "partial"),
+        (["ok", "partial"], "partial"),
         ([], "failed"),
     ],
 )
