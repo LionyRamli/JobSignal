@@ -59,6 +59,10 @@ and B2B opportunities.
 | gitleaks PATH | winget install lives in `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gitleaks.Gitleaks_*`; a shell started before install lacks it — prepend that dir to PATH |
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
+## Status
+- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) — all on `main`, CI green
+- **Next:** Phase 1.3 harmonization (role + location taxonomy)
+
 ## Approved Structure (2026-10-31)
 - `src/jobsignal/` layout: `config.py`, `logger.py`, `models.py`, `extraction/`, `harmonization/`,
   `signals/`, `storage/`, `api/`, `pipeline.py`
