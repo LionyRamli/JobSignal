@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, Depends, FastAPI
 
 from jobsignal.api.deps import require_schema
-from jobsignal.api.routes import companies, health, meta
+from jobsignal.api.routes import companies, health, meta, postings
 from jobsignal.config import get_settings
 from jobsignal.storage.db import make_engine, make_session_factory
 
@@ -32,7 +32,7 @@ def create_app(database_url: str | None = None) -> FastAPI:
     api = APIRouter(prefix=API_PREFIX)
     api.include_router(health.router)
     data = APIRouter(dependencies=[Depends(require_schema)])
-    for module in (meta, companies):
+    for module in (meta, companies, postings):
         data.include_router(module.router)
     api.include_router(data)
     app.include_router(api)

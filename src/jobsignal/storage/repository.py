@@ -9,7 +9,7 @@ from datetime import date, datetime
 from typing import NamedTuple
 
 from sqlalchemy import func, insert, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from jobsignal.harmonization.locations import LocationParse
 from jobsignal.harmonization.roles import RoleClassification
@@ -472,3 +472,51 @@ def company_summaries(session: Session, board_token: str | None = None) -> list[
     if board_token is not None:
         statement = statement.where(Company.board_token == board_token)
     return [CompanySummary(*row) for row in session.execute(statement)]
+
+
+def list_postings(
+    session: Session,
+    *,
+    company: str | None = None,
+    role_family: str | None = None,
+    seniority: str | None = None,
+    country: str | None = None,
+    open_only: bool = True,
+    after_id: int | None = None,
+    limit: int = 50,
+) -> list[PostingRecord]:
+    """Postings ordered by id (keyset pagination), locations and company eager-loaded."""
+    statement = select(PostingRecord).options(
+        selectinload(PostingRecord.locations), selectinload(PostingRecord.company)
+    )
+    if company is not None:
+        statement = statement.join(Company, Company.id == PostingRecord.company_id).where(
+            Company.board_token == company
+        )
+    if role_family is not None:
+        statement = statement.where(PostingRecord.role_family == role_family)
+    if seniority is not None:
+        statement = statement.where(PostingRecord.seniority == seniority)
+    if country is not None:
+        in_country = (
+            select(posting_locations.c.posting_id)
+            .join(Location, Location.id == posting_locations.c.location_id)
+            .where(
+                posting_locations.c.posting_id == PostingRecord.id,
+                Location.country_code == country,
+            )
+        )
+        statement = statement.where(in_country.exists())
+    if open_only:
+        statement = statement.where(PostingRecord.closed_at.is_(None))
+    if after_id is not None:
+        statement = statement.where(PostingRecord.id > after_id)
+    return list(session.scalars(statement.order_by(PostingRecord.id).limit(limit)))
+
+
+def get_posting(session: Session, posting_id: int) -> PostingRecord | None:
+    return session.scalar(
+        select(PostingRecord)
+        .options(selectinload(PostingRecord.locations), selectinload(PostingRecord.company))
+        .where(PostingRecord.id == posting_id)
+    )
