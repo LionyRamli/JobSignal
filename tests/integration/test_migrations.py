@@ -3,28 +3,14 @@
 import pytest
 from alembic import command
 from alembic.autogenerate import compare_metadata
-from alembic.config import Config
 from alembic.runtime.migration import MigrationContext
 from alembic.script import ScriptDirectory
 from sqlalchemy import inspect
 
 from jobsignal.storage.db import make_engine
 from jobsignal.storage.schema import Base
-from tests.conftest import PROJECT_ROOT
 
 pytestmark = pytest.mark.integration
-
-
-@pytest.fixture
-def db_url(monkeypatch, tmp_path):
-    url = f"sqlite:///{(tmp_path / 'migrations.db').as_posix()}"
-    monkeypatch.setenv("JOBSIGNAL_DATABASE_URL", url)
-    return url
-
-
-@pytest.fixture
-def alembic_cfg():
-    return Config(str(PROJECT_ROOT / "alembic.ini"))
 
 
 def _current_revision(url):

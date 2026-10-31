@@ -1,17 +1,120 @@
-"""SQLAlchemy ORM base. Tables are added here in Phase 1.2; Alembic autogenerates from it."""
+"""SQLAlchemy ORM schema. Alembic autogenerates migrations from this module.
 
-from sqlalchemy import MetaData
-from sqlalchemy.orm import DeclarativeBase
+History model: every scrape run has one snapshot per company; ``snapshot_postings`` records
+exactly which postings were open in each snapshot, and ``postings`` carries
+first_seen/last_seen/closed_at for posting-duration analysis (Phase 2).
+"""
+
+from datetime import datetime
+
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    ForeignKey,
+    Index,
+    MetaData,
+    String,
+    Table,
+    Text,
+    UniqueConstraint,
+)
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+
+from jobsignal.storage.types import UTCDateTime
 
 # Deterministic constraint names so migrations work identically on SQLite and PostgreSQL.
 NAMING_CONVENTION = {
     "ix": "ix_%(column_0_label)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
 }
 
+RUN_STATUSES = ("running", "succeeded", "partial", "failed")
+SNAPSHOT_STATUSES = ("ok", "failed")
+
+
+def _in(column: str, values: tuple[str, ...]) -> str:
+    return f"{column} IN ({', '.join(repr(v) for v in values)})"
+
 
 class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
+
+
+snapshot_postings = Table(
+    "snapshot_postings",
+    Base.metadata,
+    Column("snapshot_id", ForeignKey("snapshots.id", ondelete="CASCADE"), primary_key=True),
+    Column("posting_id", ForeignKey("postings.id", ondelete="CASCADE"), primary_key=True),
+    Index("ix_snapshot_postings_posting_id", "posting_id"),
+)
+
+
+class Company(Base):
+    __tablename__ = "companies"
+    __table_args__ = (UniqueConstraint("source", "board_token"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source: Mapped[str] = mapped_column(String(32))
+    board_token: Mapped[str] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime)
+
+
+class ScrapeRun(Base):
+    __tablename__ = "scrape_runs"
+    __table_args__ = (CheckConstraint(_in("status", RUN_STATUSES), name="status"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    started_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    finished_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    status: Mapped[str] = mapped_column(String(16))
+
+    snapshots: Mapped[list["Snapshot"]] = relationship(back_populates="run")
+
+
+class Snapshot(Base):
+    __tablename__ = "snapshots"
+    __table_args__ = (
+        UniqueConstraint("run_id", "company_id"),
+        CheckConstraint(_in("status", SNAPSHOT_STATUSES), name="status"),
+        Index("ix_snapshots_company_id_fetched_at", "company_id", "fetched_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    run_id: Mapped[int] = mapped_column(ForeignKey("scrape_runs.id"))
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    fetched_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    status: Mapped[str] = mapped_column(String(16))
+    posting_count: Mapped[int]
+    error_type: Mapped[str | None] = mapped_column(String(64))
+
+    run: Mapped[ScrapeRun] = relationship(back_populates="snapshots")
+    company: Mapped[Company] = relationship()
+    postings: Mapped[list["PostingRecord"]] = relationship(secondary=snapshot_postings)
+
+
+class PostingRecord(Base):
+    """A posting's latest known state plus its open/close history on one company's board."""
+
+    __tablename__ = "postings"
+    __table_args__ = (
+        UniqueConstraint("company_id", "external_id"),
+        Index("ix_postings_company_id_closed_at", "company_id", "closed_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    company_id: Mapped[int] = mapped_column(ForeignKey("companies.id"))
+    external_id: Mapped[str] = mapped_column(String(64))
+    title: Mapped[str] = mapped_column(String(512))
+    location_raw: Mapped[str | None] = mapped_column(Text)
+    department: Mapped[str | None] = mapped_column(String(256))
+    url: Mapped[str] = mapped_column(Text)
+    first_published: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    updated_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    first_seen_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime)
+    closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+
+    company: Mapped[Company] = relationship()
