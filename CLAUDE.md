@@ -49,6 +49,10 @@ and B2B opportunities.
 | Env | `JOBSIGNAL_DATABASE_URL`, `JOBSIGNAL_LOG_LEVEL` via env or `.env` (see `.env.example`) |
 | Scrape | `uv run alembic upgrade head` once, then `uv run python scripts/run_scrape.py anthropic databricks stripe [--db URL] [--out FILE]`; exit 0 ok / 1 a company failed or was incomplete / 2 schema missing. One writer at a time |
 | Storage rules | closures only from complete fetches; failed snapshot posting_count is NULL; always filter `snapshots.status` in queries; times are aware UTC via `UTCDateTime` |
+| Harmonize | `uv run python scripts/run_harmonize.py [--db URL] [--batch-size N]`; reprocesses postings whose taxonomy_version is missing/outdated; exit 2 if schema missing |
+| Taxonomy rule | ANY change to `harmonization/data/*.toml`, `roles.py`, `locations.py`, `taxonomy.py` → bump `TAXONOMY_VERSION` + update FINGERPRINT in `tests/unit/harmonization/test_taxonomy.py` (CI fails otherwise). Tune rules on `split=tune` golden rows only; never edit labels to pass |
+| Phase 1.4 counting | postings have MANY locations and places nest (city ⊂ region ⊂ country): count `COUNT(DISTINCT posting_id)` after roll-up |
+| .gitignore gotcha | no inline comments; anchor paths (`/data/`) — unanchored `data/` once hid package data |
 | Migrations gotcha | env.py `render_item` writes `UTCDateTime` as `sa.DateTime(timezone=True)`: migrations never import app code |
 | Fixtures | `uv run python scripts/record_greenhouse_fixture.py <token> <out.json>` (1 live GET, trimmed) |
 | ATS facts | Greenhouse: use `/v1/boards/{token}/departments` (jobs+dept, ~0.5 MB); OpenAI is on Ashby, not Greenhouse |
@@ -61,7 +65,8 @@ and B2B opportunities.
 
 ## Status
 - **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) — all on `main`, CI green
-- **Next:** Phase 1.3 harmonization (role + location taxonomy)
+- **In review:** Phase 1.3 harmonization (branch `feat/phase-1.3-harmonization`)
+- **Next:** Phase 1.4 signal detection
 
 ## Approved Structure (2026-10-31)
 - `src/jobsignal/` layout: `config.py`, `logger.py`, `models.py`, `extraction/`, `harmonization/`,
