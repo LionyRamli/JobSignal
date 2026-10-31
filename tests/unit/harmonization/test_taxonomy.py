@@ -15,7 +15,7 @@ from jobsignal.harmonization.taxonomy import (
 
 
 def test_enums_match_spec():
-    assert TAXONOMY_VERSION == "2026.11.2"
+    assert TAXONOMY_VERSION == "2026.11.3"
     assert [f.value for f in RoleFamily] == [
         "software_engineering", "ml_research", "data", "solutions_engineering", "security",
         "product_management", "program_management", "design", "sales", "customer_success",
@@ -103,8 +103,8 @@ def test_data_files_are_not_gitignored():
 
 # Changing any rule file or classifier must change TAXONOMY_VERSION (stored results carry it,
 # and only a version change makes `harmonize` reprocess). Update BOTH lines below together.
-FINGERPRINTED_VERSION = "2026.11.2"
-FINGERPRINT = "ece00814ba3a2157"
+FINGERPRINTED_VERSION = "2026.11.3"
+FINGERPRINT = "db07aec6ae896b2c"
 
 
 def _fingerprint() -> str:

@@ -168,3 +168,27 @@ def test_oregon_code_is_not_a_separator(raw, expected, unresolved):
     result = parse_locations(raw)
     assert [loc.key for loc in result.locations] == expected
     assert result.unresolved == unresolved
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [  # real strings from the live data
+        ("San Francisco, CA, Chicago, IL, New York, NY",
+         ["city|US|US-CA|San Francisco", "city|US|US-IL|Chicago", "city|US|US-NY|New York City"]),
+        ("South San Francisco, CA , New York, NY",
+         ["city|US|US-CA|South San Francisco", "city|US|US-NY|New York City"]),
+        ("San Francisco, NY, Seattle",
+         ["city|US|US-CA|San Francisco", "region|US|US-NY|", "city|US|US-WA|Seattle"]),
+        ("Toronto, NY, SEA, SF",
+         ["city|CA|CA-ON|Toronto", "region|US|US-NY|", "city|US|US-WA|Seattle",
+          "city|US|US-CA|San Francisco"]),
+    ],
+)  # fmt: skip
+def test_region_codes_inside_longer_lists_are_list_items(raw, expected):
+    result = parse_locations(raw)
+    assert [loc.key for loc in result.locations] == expected
+    assert result.unresolved == ()
+
+
+def test_region_followed_by_its_own_code_is_one_region():
+    assert parse_locations("California, CA") == parse_locations("California")

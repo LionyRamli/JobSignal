@@ -173,12 +173,12 @@ def _resolve_piece(piece: str) -> tuple[list[CanonicalLocation], list[str]]:
             i += 1
             continue
         if b:
-            pair = _resolve_pair(a, b)
+            pair = _lookup(f"{a}, {b}") or _resolve_pair(a, b)  # joined alias: "new york, ny"
             if pair is not None:
                 found.append(pair)
                 i += 2
                 continue
-        if b and _contradicting_qualifier(a, b):
+        if len(parts) == 2 and b and _contradicting_qualifier(a, b):  # longer = a list
             unresolved.append(originals[i])  # "Paris, TX": never guess which Paris
             i += 1
             continue
@@ -197,7 +197,11 @@ def _contradicting_qualifier(a: str, b: str) -> bool:
     "SF, NY" (abbreviations) or "San Francisco, New York" (full names) are not qualifiers.
     """
     t = _gazetteer().taxonomy
-    return len(a) > 3 and (a in t.cities or a in t.regions) and b in t.regions and len(b) <= 3
+    if len(a) <= 3 or len(b) > 3 or b not in t.regions:
+        return False
+    if a in t.cities:
+        return True  # an agreeing pair was already resolved by _resolve_pair
+    return a in t.regions and t.regions[a] != t.regions[b]
 
 
 def _resolve_pair(a: str, b: str) -> CanonicalLocation | None:
