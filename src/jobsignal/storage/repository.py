@@ -26,7 +26,6 @@ from jobsignal.storage.schema import (
     snapshot_postings,
 )
 from jobsignal.storage.types import UTCDateTime
-from jobsignal.weeks import week_start
 
 
 class StaleSnapshotError(Exception):
@@ -282,20 +281,34 @@ def opening_rows(session: Session) -> list[OpeningRow]:
     return rows
 
 
-def observed_weeks(session: Session) -> dict[str, set[date]]:
-    """Company → ISO week starts with at least one fully successful ('ok') snapshot.
+def ok_snapshot_stats(session: Session) -> dict[str, list[tuple[datetime, int, int]]]:
+    """Company -> (fetched_at, posting_count, new_count) for every fully successful snapshot.
 
-    Partial-only weeks are excluded: a partial fetch under-counts new openings.
+    new_count = postings first seen at that snapshot. signals.coverage turns these into the
+    weeks whose new openings can be trusted (no outage gap, no re-import, no collapsed board).
     """
-    weeks: dict[str, set[date]] = {}
+    new_by_time: dict[tuple[int, datetime], int] = {}
+    for company_id, seen_at, n in session.execute(
+        select(PostingRecord.company_id, PostingRecord.first_seen_at, func.count()).group_by(
+            PostingRecord.company_id, PostingRecord.first_seen_at
+        )
+    ):
+        new_by_time[
+            (company_id, UTCDateTime().process_result_value(_as_datetime(seen_at), None))
+        ] = n
+    stats: dict[str, list[tuple[datetime, int, int]]] = {}
     statement = (
-        select(Company.board_token, Snapshot.fetched_at)
+        select(
+            Company.board_token, Snapshot.company_id, Snapshot.fetched_at, Snapshot.posting_count
+        )
         .join(Company, Company.id == Snapshot.company_id)
         .where(Snapshot.status == "ok")
+        .order_by(Snapshot.fetched_at)
     )
-    for company, fetched_at in session.execute(statement):
-        weeks.setdefault(company, set()).add(week_start(fetched_at))
-    return weeks
+    for token, company_id, fetched_at, count in session.execute(statement):
+        new = new_by_time.get((company_id, fetched_at), 0)
+        stats.setdefault(token, []).append((fetched_at, int(count or 0), new))
+    return stats
 
 
 def _as_datetime(value):

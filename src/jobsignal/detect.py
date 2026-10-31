@@ -17,13 +17,13 @@ import pandas as pd
 
 from jobsignal.config import get_settings
 from jobsignal.logger import setup_logging
+from jobsignal.signals.coverage import SnapshotStat, available_weeks
 from jobsignal.signals.detectors import SCORE_COLUMNS, mix_shift_scores, volume_scores
 from jobsignal.signals.events import to_frame
 from jobsignal.signals.features import cell_counts, scored_weeks
 from jobsignal.signals.params import LEVELS, DetectorParams
 from jobsignal.storage.db import make_engine, make_session_factory, schema_ready
-from jobsignal.storage.repository import observed_weeks, opening_rows, save_signal_run
-from jobsignal.weeks import week_start
+from jobsignal.storage.repository import ok_snapshot_stats, opening_rows, save_signal_run
 
 logger = logging.getLogger(__name__)
 
@@ -71,16 +71,12 @@ def main(argv: list[str] | None = None, now: Callable[[], datetime] | None = Non
 def score_all(session, as_of: datetime, params: DetectorParams) -> pd.DataFrame:
     rows = opening_rows(session)
     observed, published = to_frame(rows, "observed"), to_frame(rows, "published")
-    # The week of a company's first snapshot is never a baseline week: most of it happened
-    # before the cutoff that defines a 'new' opening, so its count is ~0 by construction.
-    first_week = {
-        r.company: week_start(r.company_first_snapshot_at)
-        for r in rows
-        if r.company_first_snapshot_at is not None
-    }
+    # Only weeks that scraping covered continuously count (no outage gap, re-import or
+    # collapsed board). The first-snapshot week is never covered: it starts before the
+    # first scrape, so its count of 'new' openings is ~0 by construction.
     available = {
-        company: weeks - {first_week.get(company)}
-        for company, weeks in observed_weeks(session).items()
+        company: available_weeks([SnapshotStat(*stat) for stat in stats])
+        for company, stats in ok_snapshot_stats(session).items()
     }
 
     # extra history lets the baseline skip up to `baseline_weeks` missing (outage) weeks

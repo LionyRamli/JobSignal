@@ -59,6 +59,12 @@ def seed(db_url, new_per_week, outage_weeks=()):
             record_snapshot(session, run, company, [posting(i, at) for i in open_ids], at)
             finish_run(session, run, at)
             session.commit()
+        # a real schedule keeps scraping: one more snapshot after the last scored week
+        at = WEEK0 + timedelta(weeks=len(new_per_week) + 1)
+        run = start_run(session, at)
+        record_snapshot(session, run, company, [posting(i, at) for i in open_ids], at)
+        finish_run(session, run, at)
+        session.commit()
         for row in session.scalars(select(PostingRecord)):
             roles, places = (
                 classify_title(row.title, row.department),
@@ -67,7 +73,7 @@ def seed(db_url, new_per_week, outage_weeks=()):
             save_harmonization(session, row, roles, places, "t", WEEK0)
         session.commit()
     engine.dispose()
-    return WEEK0 + timedelta(weeks=len(new_per_week) + 1, days=1)  # Wednesday after last week
+    return WEEK0 + timedelta(weeks=len(new_per_week) + 1, days=1)  # Wed after the last week
 
 
 def query(db, statement):
@@ -168,13 +174,13 @@ def company_volume_row(db):
     )
 
 
-def test_outage_week_is_skipped_by_the_baseline(migrated_url):
-    """5/week; no scrape in week 6 (its 5 openings surface in week 7 -> 10). The baseline for
-    week 11 is the 8 AVAILABLE weeks 2,3,4,5,7,8,9,10 = (7*5 + 10)/8 = 5.625 - not the
-    zero-filled weeks 3..10 = 40/8 = 5.0."""
-    now = seed(migrated_url, [5] * 11, outage_weeks={6})
+def test_outage_week_and_its_backlog_week_are_skipped_by_the_baseline(migrated_url):
+    """5/week; no scrape in week 6, so its 5 openings surface in week 7 (10). The 14-day gap
+    hides weeks 5, 6 and 7. The baseline for week 13 is the 8 covered weeks
+    2,3,4,8,9,10,11,12 = 5.0 - neither the outage zero nor the backlog 10."""
+    now = seed(migrated_url, [5] * 13, outage_weeks={6})
     assert main(["--db", migrated_url], now=lambda: now) == 0
-    assert company_volume_row(migrated_url) == [("scored", 8, 5.625)]
+    assert company_volume_row(migrated_url) == [("scored", 8, 5.0)]
 
 
 def test_first_snapshot_week_is_not_a_baseline_week(migrated_url):

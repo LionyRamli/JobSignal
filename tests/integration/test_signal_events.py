@@ -9,7 +9,7 @@ from jobsignal.signals.events import to_frame
 from jobsignal.storage.repository import (
     finish_run,
     get_or_create_company,
-    observed_weeks,
+    ok_snapshot_stats,
     opening_rows,
     record_failed_snapshot,
     record_snapshot,
@@ -111,27 +111,16 @@ def test_published_basis_uses_first_published_week(session, company):
     assert frame["event_week"].tolist() == [date(2026, 9, 14)]
 
 
-def test_observed_weeks_requires_ok_snapshot(session, company):
-    snapshot(session, company, [posting("a", T0)], T0)  # ok, week of 2026-09-28
-    failed_at = T0 + timedelta(days=7)  # week of 2026-10-05: only a failed snapshot
+def test_ok_snapshot_stats_counts_new_postings_and_skips_non_ok(session, company):
+    snapshot(session, company, [posting("a", T0), posting("b", T0)], T0)  # initial load
+    failed_at = T0 + timedelta(days=7)
     run = start_run(session, failed_at)
     record_failed_snapshot(session, run, company, "RetryExhaustedError", failed_at)
     session.commit()
-    snapshot(
-        session,
-        company,
-        [posting("a", T0 + timedelta(days=14))],
-        T0 + timedelta(days=14),
-        complete=False,
-    )
-    # week of 2026-10-12: partial only;  week of 2026-10-19: partial + ok
-    snapshot(
-        session,
-        company,
-        [posting("a", T0 + timedelta(days=21))],
-        T0 + timedelta(days=21),
-        complete=False,
-    )
-    snapshot(session, company, [posting("a", T0 + timedelta(days=22))], T0 + timedelta(days=22))
+    partial_at = T0 + timedelta(days=8)
+    snapshot(session, company, [posting("a", partial_at), posting("c", partial_at)], partial_at,
+             complete=False)  # fmt: skip
+    ok_at = T0 + timedelta(days=9)
+    snapshot(session, company, [posting(i, ok_at) for i in "abcd"], ok_at)
 
-    assert observed_weeks(session) == {"acme": {date(2026, 9, 28), date(2026, 10, 19)}}
+    assert ok_snapshot_stats(session) == {"acme": [(T0, 2, 2), (ok_at, 4, 1)]}
