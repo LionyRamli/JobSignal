@@ -16,7 +16,7 @@ title = [
   "engineering managers", "tech lead", "technical lead", "engineering lead", "engineer",
   "engineers", "engineering", "member of technical staff", "it engineer", "it support",
   "systems administrator", "database engineer", "storage engineer", "observability",
-  "infrastructure", "cloud engineer", "inference engineer",
+  "infrastructure", "cloud engineer", "inference engineer", "systems architect",
 ]
 department = [
   "engineering", "software engineering", "engineering - pipeline", "infrastructure", "compute",
@@ -53,6 +53,9 @@ title = [
   "deployment strategist", "technical deployment lead", "deployment lead", "implementation",
   "implementation engineer", "professional services", "consultant", "technical consultant",
   "solutions consultant", "delivery architect", "delivery manager", "delivery lead",
+  "solutions architecture", "specialist solutions architecture", "applied ai architecture",
+  "applied ai engineering", "applied ai", "forward deployed engineering", "partner engineer",
+  "partner solutions engineer", "engagement manager",
   "technical solutions", "integration engineer", "pre-sales", "presales",
 ]
 department = [
@@ -68,7 +71,8 @@ title = [
   "threat intelligence", "threat", "detection", "incident response", "appsec",
   "application security", "offensive security", "red team", "trust and safety",
   "trust & safety", "safeguards", "fraud", "anti-abuse", "abuse", "investigator",
-  "vulnerability", "cryptography", "identity and access",
+  "vulnerability", "cryptography", "identity and access", "enforcement analyst", "grc",
+  "platform security", "security architect",
 ]
 department = ["security", "safeguards (trust & safety)", "safeguards", "trust & safety"]
 
@@ -128,6 +132,7 @@ title = [
   "brand", "content", "events", "event", "demand generation", "public relations", "pr",
   "developer relations", "devrel", "developer advocate", "community", "social media",
   "copywriter", "writer", "editorial", "creative", "field marketing", "lifecycle",
+  "communications manager", "internal communications",
 ]
 department = ["marketing", "marketing & brand", "communications", "brand"]
 
@@ -138,6 +143,8 @@ title = [
   "sales operations", "procurement", "workplace", "facilities", "real estate", "logistics",
   "supply chain", "vendor", "enablement", "sales enablement", "strategist", "planning",
   "business analyst", "program operations", "administrator", "executive assistant",
+  "research operations", "risk operations", "infrastructure operations", "demand planning",
+  "business systems", "business systems analyst",
   "executive business partner", "office manager", "coordinator",
 ]
 department = [
@@ -150,7 +157,7 @@ title = [
   "finance", "accounting", "accountant", "controller", "tax", "treasury", "fp&a",
   "financial", "payroll", "revenue accounting", "corporate development", "investor relations",
   "audit", "auditor", "billing", "accounts payable", "accounts receivable", "financial analyst",
-  "finance manager", "cfo", "capital markets", "corporate finance",
+  "finance manager", "cfo", "capital markets", "corporate finance", "legal entity",
 ]
 department = ["finance", "accounting", "finance & accounting"]
 
