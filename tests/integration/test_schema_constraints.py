@@ -130,3 +130,24 @@ def test_failed_snapshot_may_have_null_posting_count(session):
     run = ScrapeRun(started_at=NOW, status="running")
     session.add(Snapshot(run=run, company=company(), fetched_at=NOW, status="failed"))
     session.flush()
+
+
+def test_location_kinds_match_harmonization_vocabulary():
+    from jobsignal.harmonization.locations import LocationKind
+    from jobsignal.storage.schema import LOCATION_KINDS
+
+    assert tuple(k.value for k in LocationKind) == LOCATION_KINDS
+
+
+def test_location_kind_check_and_unique_key(session):
+    from jobsignal.storage.schema import Location
+
+    session.add(Location(key="x|US||", kind="planet"))
+    with pytest.raises(IntegrityError):
+        session.flush()
+    session.rollback()
+    session.add_all(
+        [Location(key="country|US||", kind="country"), Location(key="country|US||", kind="country")]
+    )
+    with pytest.raises(IntegrityError):
+        session.flush()

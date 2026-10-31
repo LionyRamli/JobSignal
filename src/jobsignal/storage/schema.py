@@ -34,6 +34,7 @@ NAMING_CONVENTION = {
 
 RUN_STATUSES = ("running", "succeeded", "partial", "failed")
 SNAPSHOT_STATUSES = ("ok", "partial", "failed")
+LOCATION_KINDS = ("city", "region", "country", "remote")  # = harmonization LocationKind
 
 
 def _in(column: str, values: tuple[str, ...]) -> str:
@@ -50,6 +51,14 @@ snapshot_postings = Table(
     Column("snapshot_id", ForeignKey("snapshots.id", ondelete="CASCADE"), primary_key=True),
     Column("posting_id", ForeignKey("postings.id", ondelete="CASCADE"), primary_key=True),
     Index("ix_snapshot_postings_posting_id", "posting_id"),
+)
+
+posting_locations = Table(
+    "posting_locations",
+    Base.metadata,
+    Column("posting_id", ForeignKey("postings.id", ondelete="CASCADE"), primary_key=True),
+    Column("location_id", ForeignKey("locations.id", ondelete="CASCADE"), primary_key=True),
+    Index("ix_posting_locations_location_id", "location_id"),
 )
 
 
@@ -103,6 +112,8 @@ class PostingRecord(Base):
     __table_args__ = (
         UniqueConstraint("company_id", "external_id"),
         Index("ix_postings_company_id_closed_at", "company_id", "closed_at"),
+        Index("ix_postings_role_family_seniority", "role_family", "seniority"),
+        Index("ix_postings_taxonomy_version", "taxonomy_version"),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -117,5 +128,28 @@ class PostingRecord(Base):
     first_seen_at: Mapped[datetime] = mapped_column(UTCDateTime)
     last_seen_at: Mapped[datetime] = mapped_column(UTCDateTime)
     closed_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
+    # Phase 1.3 harmonization (NULL until the harmonize command has run)
+    role_family: Mapped[str | None] = mapped_column(String(32))
+    seniority: Mapped[str | None] = mapped_column(String(16))
+    taxonomy_version: Mapped[str | None] = mapped_column(String(16))
+    harmonized_at: Mapped[datetime | None] = mapped_column(UTCDateTime)
 
     company: Mapped[Company] = relationship()
+    locations: Mapped[list["Location"]] = relationship(secondary=posting_locations)
+
+
+class Location(Base):
+    """A canonical place; ``key`` is CanonicalLocation.key (kind|country|region|city)."""
+
+    __tablename__ = "locations"
+    __table_args__ = (
+        UniqueConstraint("key"),
+        CheckConstraint(_in("kind", LOCATION_KINDS), name="kind"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    key: Mapped[str] = mapped_column(String(160))
+    kind: Mapped[str] = mapped_column(String(16))
+    country_code: Mapped[str | None] = mapped_column(String(2))
+    region_code: Mapped[str | None] = mapped_column(String(6))
+    city: Mapped[str | None] = mapped_column(String(128))
