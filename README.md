@@ -20,6 +20,7 @@ Requires [uv](https://docs.astral.sh/uv/) and Python 3.12.
 
 ```bash
 uv sync                      # install exact locked dependencies
+uv run pre-commit install    # secret scan (gitleaks) before every commit
 cp .env.example .env         # optional: override settings
 uv run alembic upgrade head  # create/migrate the local SQLite database
 uv run pytest                # run the test suite

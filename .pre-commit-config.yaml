@@ -1,0 +1,12 @@
+# Install once per clone:  uv run pre-commit install
+# Requires gitleaks on PATH (winget install Gitleaks.Gitleaks / brew install gitleaks).
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: gitleaks (secret scan of staged changes)
+        # --redact: findings show rule + file:line, never the secret value
+        entry: gitleaks git --pre-commit --staged --redact --no-banner --verbose
+        language: system
+        pass_filenames: false
+        always_run: true
