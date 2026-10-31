@@ -23,6 +23,7 @@ uv sync                      # install exact locked dependencies
 uv run pre-commit install    # secret scan (gitleaks) before every commit
 cp .env.example .env         # optional: override settings
 uv run alembic upgrade head  # create/migrate the local SQLite database
+uv run python scripts/run_scrape.py anthropic databricks stripe  # scrape + store
 uv run pytest                # run the test suite
 uv run ruff check . && uv run ruff format --check .
 ```
@@ -36,6 +37,19 @@ dashboard/       Streamlit app (talks to the API only)
 scripts/         command-line entry points
 tests/           unit/ and integration/ tests; fixtures/ holds recorded ATS responses
 ```
+
+## Storage
+
+| Table | Holds |
+|-------|-------|
+| `companies` | one row per (ATS source, board token) |
+| `scrape_runs` | each CLI run: `running` → `succeeded` / `partial` / `failed` |
+| `snapshots` | one fetch of one company in one run: `ok` / `partial` / `failed` |
+| `postings` | latest state of each posting + `first_seen_at` / `last_seen_at` / `closed_at` |
+| `snapshot_postings` | which postings were open in each snapshot (the time series) |
+
+A posting is closed only when a **complete** fetch no longer lists it; failed or partial
+fetches never close anything. Run one scrape at a time per database.
 
 ## Configuration
 
