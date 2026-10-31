@@ -130,7 +130,7 @@ def test_retry_after_is_capped(make_client, sleeps):
     assert sleeps == [30.0]
 
 
-@pytest.mark.parametrize("value", ["Wed, 21 Oct 2026 07:28:00 GMT", "-5", "soon", ""])
+@pytest.mark.parametrize("value", ["Wed, 21 Oct 2026 07:28:00 GMT", "-5", "soon", "", "1.5"])
 def test_unparseable_retry_after_falls_back_to_backoff(make_client, sleeps, value):
     handler = Scripted(httpx.Response(503, headers={"Retry-After": value}), ok())
     make_client(handler).get_json(URL)
@@ -245,3 +245,16 @@ def test_retry_logs_warning_and_exhaustion_logs_error(make_client, caplog, monke
     assert "503" in records[0][1]
     assert "attempt 1/2" in records[0][1]
     assert URL in records[1][1]
+
+
+def test_absurdly_long_retry_after_is_capped_not_crashing(make_client, sleeps):
+    handler = Scripted(httpx.Response(429, headers={"Retry-After": "9" * 5000}), ok())
+    assert make_client(handler).get_json(URL) == OK
+    assert sleeps == [30.0]
+
+
+def test_non_ascii_digit_retry_after_falls_back_to_backoff(make_client, sleeps):
+    superscript_two = "²".encode()  # str.isdigit() is True for it, int() is not
+    handler = Scripted(httpx.Response(503, headers={"Retry-After": superscript_two}), ok())
+    make_client(handler).get_json(URL)
+    assert sleeps == [1.0]

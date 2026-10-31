@@ -110,7 +110,7 @@ class GreenhouseSource(ATSSource):
             )
         except ValidationError as exc:
             logger.warning(
-                "skipping malformed job company=%s job_id=%s errors=%d",
+                "skipping malformed job company=%s job_id=%r errors=%d",
                 company,
                 job.get("id", "?"),
                 exc.error_count(),

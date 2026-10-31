@@ -31,6 +31,7 @@ RETRYABLE_STATUSES = frozenset({429, 500, 502, 503, 504})
 USER_AGENT = "JobSignal/0.1 (+https://github.com/LionyRamli/JobSignal; academic research)"
 DEFAULT_MIN_INTERVAL = 2.0
 TIMEOUT = httpx.Timeout(20.0, connect=5.0)
+MAX_RETRY_AFTER_DIGITS = 9
 
 
 class _Retryable(Exception):  # noqa: N818 - internal control-flow signal, not an error
@@ -146,6 +147,9 @@ class HttpClient:
     def _delay(self, attempt: int, retry_after: str | None) -> float:
         if retry_after is not None:
             value = retry_after.strip()
-            if value.isdigit():  # seconds form only; HTTP-dates and negatives fall back
+            # Seconds form only (ASCII digits); HTTP-dates, negatives, decimals fall back.
+            if value.isascii() and value.isdigit():
+                if len(value) > MAX_RETRY_AFTER_DIGITS:  # int() refuses >4300 digits
+                    return float(self._backoff_cap)
                 return float(min(int(value), self._backoff_cap))
         return self._rand() * min(self._backoff_cap, self._backoff_base * 2**attempt)

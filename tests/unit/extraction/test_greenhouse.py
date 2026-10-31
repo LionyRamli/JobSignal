@@ -186,3 +186,23 @@ def test_logs_run_start_and_count(caplog, monkeypatch):
     info = [r.getMessage() for r in caplog.records if r.levelname == "INFO"]
     assert any("company=anthropic" in m for m in info)
     assert any("company=anthropic" in m and "postings=6" in m for m in info)
+
+
+def test_job_with_unsafe_url_is_skipped():
+    payload = load("departments_anthropic.json")
+    payload["departments"][0]["jobs"][0]["absolute_url"] = "javascript:alert(document.cookie)"
+    source, _ = source_for(payload)
+    assert "4017331008" not in {p.external_id for p in source.fetch_postings("anthropic")}
+
+
+def test_malformed_job_id_cannot_forge_log_lines(caplog, monkeypatch):
+    monkeypatch.setattr(logging.getLogger("jobsignal"), "propagate", True)
+    payload = load("departments_anthropic.json")
+    job = payload["departments"][0]["jobs"][0]
+    job["id"] = "1\n2026-10-31 00:00:00 ERROR jobsignal: forged"
+    source, _ = source_for(payload)
+    with caplog.at_level(logging.WARNING, logger="jobsignal.extraction.greenhouse"):
+        source.fetch_postings("anthropic")
+    messages = [r.getMessage() for r in caplog.records if r.levelname == "WARNING"]
+    assert len(messages) == 1
+    assert "\n" not in messages[0]

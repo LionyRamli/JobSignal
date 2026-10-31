@@ -53,3 +53,17 @@ def test_posting_rejects_naive_datetime():
 def test_posting_round_trips_through_json():
     posting = make_posting(first_published=FETCHED)
     assert Posting.model_validate_json(posting.model_dump_json()) == posting
+
+
+@pytest.mark.parametrize(
+    "url", ["javascript:alert(1)", "data:text/html,<script>", "ftp://x/y", "/relative", ""]
+)
+def test_posting_url_must_be_absolute_http(url):
+    with pytest.raises(ValidationError):
+        make_posting(url=url)
+
+
+def test_posting_accepts_http_and_https_urls():
+    assert (
+        make_posting(url="http://stripe.com/jobs?gh_jid=1").url == "http://stripe.com/jobs?gh_jid=1"
+    )

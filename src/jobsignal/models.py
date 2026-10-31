@@ -1,5 +1,7 @@
 """Shared domain models passed between extraction, harmonization, storage and signals."""
 
+from urllib.parse import urlsplit
+
 from pydantic import AwareDatetime, BaseModel, ConfigDict, field_validator
 
 
@@ -26,3 +28,12 @@ class Posting(BaseModel):
         if not value:
             raise ValueError("must not be blank")
         return value
+
+    @field_validator("url")
+    @classmethod
+    def _require_http_url(cls, value: str) -> str:
+        # Untrusted ATS data ends up as dashboard links: block javascript:/data: etc.
+        parts = urlsplit(value.strip())
+        if parts.scheme not in {"http", "https"} or not parts.netloc:
+            raise ValueError("url must be an absolute http(s) URL")
+        return value.strip()
