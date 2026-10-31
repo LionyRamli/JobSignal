@@ -20,6 +20,10 @@ class DetectorParams:
     mix_baseline_weeks: int = 12
     mix_min_recent: int = 5
     mix_min_company_baseline: int = 30
+    # Published-date shares are survivorship-biased: slow-filling roles are over-represented
+    # in the older window, so their 'contractions' are mostly fill-time artefacts (final
+    # review I4). Scored and stored either way; flagged only when opted in.
+    mix_flag_contractions: bool = False
 
     def to_json(self) -> str:
         return json.dumps(asdict(self), sort_keys=True)

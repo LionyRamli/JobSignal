@@ -24,6 +24,7 @@ def score(**overrides):
         "week_start": WEEK, "observed": 12.0, "baseline_mean": 5.0, "baseline_std": 0.756,
         "baseline_weeks": 8, "z": 3.13, "status": "scored", "is_signal": True,
         "direction": "expansion", "severity": "notable",
+        "company_recent_total": None, "company_baseline_total": None,
         "basis": "observed", "level": "company_family_country",
     }  # fmt: skip
     row.update(overrides)
@@ -124,3 +125,35 @@ def test_empty_scores_still_record_the_run(session, acme):
     run = save_signal_run(session, NOW, NOW, DetectorParams(), frame())
     session.commit()
     assert run.id is not None
+
+
+def test_run_records_taxonomy_version_and_mix_totals(session, acme):
+    from jobsignal.harmonization.taxonomy import TAXONOMY_VERSION
+
+    mix = score(
+        detector="mix_shift",
+        basis="published",
+        observed=15.0,
+        baseline_mean=10.0,
+        baseline_std=None,
+        company_recent_total=50.0,
+        company_baseline_total=150.0,
+    )
+    run = save_signal_run(session, NOW, NOW, DetectorParams(), frame(mix))
+    session.commit()
+    session.expire_all()
+
+    assert session.get(SignalRun, run.id).taxonomy_version == TAXONOMY_VERSION
+    stored = session.scalars(select(SignalScore)).one()
+    assert (stored.company_recent_total, stored.company_baseline_total) == (50.0, 150.0)
+
+
+def test_backtest_run_does_not_hide_the_live_run(session, acme):
+    live_as_of = NOW
+    save_signal_run(session, NOW, live_as_of, DetectorParams(), frame(score(z=3.5)))
+    later = NOW.replace(hour=9)  # a backtest computed AFTER the live run, for an older week
+    backtest_as_of = NOW.replace(day=1, month=9)
+    save_signal_run(session, later, backtest_as_of, DetectorParams(), frame(score(z=8.0)))
+    session.commit()
+
+    assert [s.z for s in latest_signals(session)] == [3.5]

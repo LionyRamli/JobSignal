@@ -170,6 +170,7 @@ class SignalRun(Base):
     computed_at: Mapped[datetime] = mapped_column(UTCDateTime)
     as_of: Mapped[datetime] = mapped_column(UTCDateTime)
     signals_version: Mapped[str] = mapped_column(String(16))
+    taxonomy_version: Mapped[str] = mapped_column(String(16))  # role families the run used
     params: Mapped[str] = mapped_column(Text)
 
 
@@ -206,3 +207,7 @@ class SignalScore(Base):
     is_signal: Mapped[bool]
     direction: Mapped[str | None] = mapped_column(String(16))
     severity: Mapped[str | None] = mapped_column(String(16))
+    # mix_shift only: company totals N_r / N_b. There, observed (n_r) and baseline_mean (n_b)
+    # are cell TOTALS over the windows, so shares are observed / N_r and baseline_mean / N_b.
+    company_recent_total: Mapped[float | None]
+    company_baseline_total: Mapped[float | None]

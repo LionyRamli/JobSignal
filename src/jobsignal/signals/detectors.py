@@ -31,6 +31,8 @@ SCORE_COLUMNS = [
     "is_signal",
     "direction",
     "severity",
+    "company_recent_total",  # mix_shift: N_r (observed = n_r, a cell TOTAL)
+    "company_baseline_total",  # mix_shift: N_b (baseline_mean = n_b, a cell TOTAL)
 ]
 _NULLABLE = (
     "baseline_mean",
@@ -40,6 +42,8 @@ _NULLABLE = (
     "severity",
     "role_family",
     "country",
+    "company_recent_total",
+    "company_baseline_total",
 )
 
 
@@ -94,6 +98,7 @@ def volume_scores(counts: pd.DataFrame, params: DetectorParams) -> pd.DataFrame:
         )
         n = len(prior)
         record = {"detector": "volume", **_cell_keys(names, cell), "week_start": target}
+        record.update(company_recent_total=None, company_baseline_total=None)
         record.update(observed=x, baseline_weeks=n, baseline_std=None, z=None)
         record["baseline_mean"] = float(prior.mean()) if n else None
         if n < params.baseline_weeks:
@@ -154,6 +159,7 @@ def mix_shift_scores(
         big_r = float(by_company_recent.get(cell_keys["company"], 0.0))
         big_b = float(by_company_base.get(cell_keys["company"], 0.0))
         record = {"detector": "mix_shift", **cell_keys, "week_start": recent[-1]}
+        record.update(company_recent_total=big_r, company_baseline_total=big_b)
         record.update(observed=n_r, baseline_mean=n_b, baseline_std=None)
         record["baseline_weeks"] = len(baseline)
         if big_b < params.mix_min_company_baseline or big_r == 0:
@@ -168,7 +174,7 @@ def mix_shift_scores(
         is_signal, direction, severity = _verdict(
             z,
             expansion_ok=n_r >= params.mix_min_recent,
-            contraction_ok=n_b >= params.mix_min_recent,
+            contraction_ok=n_b >= params.mix_min_recent and params.mix_flag_contractions,
             params=params,
         )
         record.update(

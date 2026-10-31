@@ -321,7 +321,7 @@ SCORE_FRAME_COLUMNS = frozenset(
     {
         "detector", "basis", "level", "company", "role_family", "country", "week_start",
         "observed", "baseline_mean", "baseline_std", "baseline_weeks", "z", "status",
-        "is_signal", "direction", "severity",
+        "is_signal", "direction", "severity", "company_recent_total", "company_baseline_total",
     }
 )  # fmt: skip
 
@@ -352,6 +352,7 @@ def save_signal_run(
     allowed only for ``insufficient_history`` rows (stored as NULL); anywhere else it raises
     before anything is written.
     """
+    from jobsignal.harmonization.taxonomy import TAXONOMY_VERSION
     from jobsignal.signals.params import SIGNALS_VERSION
 
     if set(scores.columns) != SCORE_FRAME_COLUMNS:
@@ -392,6 +393,8 @@ def save_signal_run(
                 "is_signal": bool(record["is_signal"]),
                 "direction": _nullable(record["direction"]),
                 "severity": _nullable(record["severity"]),
+                "company_recent_total": _nullable(record["company_recent_total"]),
+                "company_baseline_total": _nullable(record["company_baseline_total"]),
             }
         )
 
@@ -399,6 +402,7 @@ def save_signal_run(
         computed_at=computed_at,
         as_of=as_of,
         signals_version=SIGNALS_VERSION,
+        taxonomy_version=TAXONOMY_VERSION,
         params=params.to_json(),
     )
     session.add(run)
@@ -409,9 +413,15 @@ def save_signal_run(
 
 
 def latest_signals(session: Session, limit: int = 50) -> list[SignalScore]:
-    """Signals of the newest run, strongest first (by |z|)."""
+    """Signals of the run with the newest ``as_of``, strongest first (by |z|).
+
+    Ordering by as_of (not computed_at) means a backtest run computed later for an older
+    week never hides the live run.
+    """
     newest = session.scalar(
-        select(SignalRun.id).order_by(SignalRun.computed_at.desc(), SignalRun.id.desc()).limit(1)
+        select(SignalRun.id)
+        .order_by(SignalRun.as_of.desc(), SignalRun.computed_at.desc(), SignalRun.id.desc())
+        .limit(1)
     )
     if newest is None:
         return []

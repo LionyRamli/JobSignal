@@ -18,6 +18,7 @@ def test_params_defaults_match_spec():
         12,
     )
     assert (p.mix_min_recent, p.mix_min_company_baseline) == (5, 30)
+    assert p.mix_flag_contractions is False  # fill-time bias (final review I4)
     assert SIGNALS_VERSION == "2026.11.1"
     assert LEVELS == ("company", "company_family", "company_country", "company_family_country")
     assert UNKNOWN_COUNTRY == "ZZ"

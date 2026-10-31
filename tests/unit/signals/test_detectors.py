@@ -113,6 +113,7 @@ def test_tiny_cells_cannot_fake_a_freeze():
 
 def test_raw_values_kept_for_non_signals():
     row = only_row(volume_scores(series_counts([5] * 8 + [6]), P))
+    assert (row["company_recent_total"], row["company_baseline_total"]) == (None, None)
     assert (row["status"], row["is_signal"]) == ("scored", False)
     assert math.isfinite(row["z"])
     assert (row["observed"], row["baseline_mean"]) == (6, 5)
@@ -146,6 +147,7 @@ def test_mix_shift_matches_hand_computation():
     row = mix_row(mix_shift_scores(counts, company, "company_family", P), "sales")
     assert row["z"] == pytest.approx(4.3205, abs=1e-3)
     assert (row["observed"], row["baseline_mean"]) == (15, 10)
+    assert (row["company_recent_total"], row["company_baseline_total"]) == (50, 150)
     assert (row["is_signal"], row["direction"], row["severity"]) == (True, "expansion", "strong")
 
 
@@ -154,7 +156,11 @@ def test_mix_shift_contraction():
     counts, company = share_counts({("acme", "sales"): (2, 30), ("acme", "eng"): (98, 120)})
     row = mix_row(mix_shift_scores(counts, company, "company_family", P), "sales")
     assert row["z"] == pytest.approx(-4.17, abs=1e-2)
-    assert (row["is_signal"], row["direction"]) == (True, "contraction")
+    # survivorship makes slow-filling roles look like they are shrinking: scored, not flagged
+    assert (row["status"], row["is_signal"], row["direction"]) == ("scored", False, None)
+    opted_in = DetectorParams(mix_flag_contractions=True)
+    flagged = mix_row(mix_shift_scores(counts, company, "company_family", opted_in), "sales")
+    assert (flagged["is_signal"], flagged["direction"]) == (True, "contraction")
 
 
 def test_uniform_growth_is_not_a_mix_shift():

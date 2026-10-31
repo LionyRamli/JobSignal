@@ -189,3 +189,71 @@ def test_first_snapshot_week_is_not_a_baseline_week(migrated_url):
     now = seed(migrated_url, [2] * 7 + [9])
     assert main(["--db", migrated_url], now=lambda: now) == 0
     assert company_volume_row(migrated_url) == [("insufficient_history", 7, 2.0)]
+
+
+def test_postings_behind_a_signal(migrated_url):
+    from jobsignal.signals.drilldown import postings_for_score
+
+    now = seed(migrated_url, [2] * 9 + [9])
+    main(["--db", migrated_url], now=lambda: now)
+
+    engine = make_engine(migrated_url)
+    with make_session_factory(engine)() as session:
+        signal = session.scalars(
+            select(SignalScore).where(
+                SignalScore.detector == "volume",
+                SignalScore.level == "company_family_country",
+                SignalScore.is_signal.is_(True),
+            )
+        ).one()
+        ids = postings_for_score(session, signal)
+        titles = {
+            row.external_id
+            for row in session.scalars(select(PostingRecord).where(PostingRecord.id.in_(ids)))
+        }
+    engine.dispose()
+    # postings 1-2 pre-existed; weeks 1..9 add 2 each (ids 3..20); the spike week adds 21..29
+    assert titles == {str(i) for i in range(21, 30)}
+
+
+def test_drilldown_respects_the_cell_country(migrated_url):
+    from jobsignal.signals.drilldown import postings_for_score
+
+    now = seed(migrated_url, [2] * 9 + [9])
+    main(["--db", migrated_url], now=lambda: now)
+    engine = make_engine(migrated_url)
+    with make_session_factory(engine)() as session:
+        us = session.scalars(
+            select(SignalScore).where(
+                SignalScore.level == "company_family_country", SignalScore.is_signal.is_(True)
+            )
+        ).one()
+        for row in session.scalars(
+            select(PostingRecord).where(PostingRecord.external_id.in_(["27", "28", "29"]))
+        ):  # three spike postings move to London
+            row.location_raw = "London, UK"
+            save_harmonization(
+                session, row, classify_title(row.title), parse_locations(row.location_raw), "t", now
+            )
+        session.commit()
+        gb = SignalScore(
+            run_id=us.run_id,
+            detector="volume",
+            basis="observed",
+            level="company_family_country",
+            company_id=us.company_id,
+            role_family="sales",
+            country_code="GB",
+            week_start=us.week_start,
+        )
+
+        def external_ids(score):
+            ids = postings_for_score(session, score)
+            return {
+                r.external_id
+                for r in session.scalars(select(PostingRecord).where(PostingRecord.id.in_(ids)))
+            }
+
+        assert external_ids(us) == {str(i) for i in range(21, 27)}
+        assert external_ids(gb) == {"27", "28", "29"}
+    engine.dispose()

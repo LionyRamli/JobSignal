@@ -1,8 +1,8 @@
 """signals
 
-Revision ID: 8138100f0ed6
+Revision ID: eed26aeb0f5f
 Revises: c50c110ac0ba
-Create Date: 2026-11-01 02:51:44.341324
+Create Date: 2026-11-01 03:25:32.194891
 
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "8138100f0ed6"
+revision: str = "eed26aeb0f5f"
 down_revision: str | Sequence[str] | None = "c50c110ac0ba"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -27,6 +27,7 @@ def upgrade() -> None:
         sa.Column("computed_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("as_of", sa.DateTime(timezone=True), nullable=False),
         sa.Column("signals_version", sa.String(length=16), nullable=False),
+        sa.Column("taxonomy_version", sa.String(length=16), nullable=False),
         sa.Column("params", sa.Text(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_signal_runs")),
     )
@@ -50,6 +51,8 @@ def upgrade() -> None:
         sa.Column("is_signal", sa.Boolean(), nullable=False),
         sa.Column("direction", sa.String(length=16), nullable=True),
         sa.Column("severity", sa.String(length=16), nullable=True),
+        sa.Column("company_recent_total", sa.Double(), nullable=True),
+        sa.Column("company_baseline_total", sa.Double(), nullable=True),
         sa.CheckConstraint(
             "basis IN ('observed', 'published')", name=op.f("ck_signal_scores_basis")
         ),
