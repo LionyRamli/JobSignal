@@ -2,7 +2,6 @@
 
 ## Active
 
-- [ ] **Phase 1.6: Merge `feat/phase-1.6-dashboard`** - waiting on user PR; branch CI must be green
 - [ ] **Ops: schedule daily scrape → harmonize → detect** - the volume detector needs ≥ 8 continuously covered weeks; history is now the bottleneck
 
 ## Backlog
@@ -15,7 +14,6 @@
 - [ ] **Phase 1.3 deferred minors** (final review) - City, ST, Country triples; broad 1-token family phrases (data center, business partner, research economist, risk analyst, <x> recruiter); seniority edge cases (to the CEO, Fellow, Associate GC); remote edge cases (Remote - IN, Remote - US & Canada, Remote - Anywhere); harmonize perf at 100k; single harmonize runner; version length assert; stronger version-bump test; golden tail coverage
 - [ ] **Phase 1.2 deferred minors** (final review) - run status vs exit code on rejected tokens; InvalidTokenError; schema check creates empty .db / OperationalError traceback; per-snapshot load of all history; test comment on SQLite var limit; repo tests read via identity map; doc closed_at bound + julianday durations
 - [ ] **Phase 1.1 deferred minors** (from final review) - naive timestamps drop job; Content-Length isascii; `--log-level` validation; atomic `--out` write; dedupe company args; strict job-id parsing
-- [ ] **Phase 1.7: Review & hardening** - code-review + security-and-hardening per module
 
 ## Waiting On
 
@@ -31,6 +29,9 @@
 - [x] ~~Approve folder structure (+ alembic, central logging)~~ (2026-10-31)
 - [x] ~~Phase 0: Initial commit, push, CI green on GitHub (run 41214004282)~~ (2026-10-31)
 - [x] ~~Phase 1.5: API~~ (2026-11-01) - read-only FastAPI (health, meta, companies, postings w/ cursor, signals + drill-down), API key off-localhost, opaque 500s; 462 tests; live smoke on local DB
+- [x] ~~**Phase 1 (MVP) complete**~~ (2026-11-01) - extraction, storage, harmonization, signals, API, dashboard; 582 tests, CI green
+- [x] ~~Phase 1.7: Review & hardening~~ (2026-11-01) - security sweep: git history secret scan clean (72 commits), no project-file findings, pip-audit no known vulnerabilities, no dangerous patterns (eval/pickle/shell/verify=False/f-string SQL), CI SHA-pinned read-only; no critical issues found; README rewritten (how to run, security, QA)
+- [x] ~~Phase 1.6: merged to main via PR #9, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.6: Dashboard~~ (2026-11-01) - Streamlit alerts (bands, grouping, 8-week trends, Δs, drill-down), companies (server aggregates, lazy postings), runs & health; API: composition, company-trends, signals/trends; loopback launcher
 - [x] ~~Phase 1.5: merged to main via PR #8, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.4: merged to main via PR, CI green, branch deleted~~ (2026-11-01)

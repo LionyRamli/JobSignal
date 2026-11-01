@@ -68,12 +68,12 @@ and B2B opportunities.
 | Windows encoding | Python default is cp1252: always pass `encoding="utf-8"` to `read_text`/`write_text`/`open` (a missing one truncated TASKS.md once) |
 | Secret scan | pre-commit hook runs `gitleaks git --pre-commit --staged --redact` (`.pre-commit-config.yaml`; setup: `uv run pre-commit install`). Never bypass with `--no-verify`. History scan: `gitleaks git --redact .` |
 | gitleaks PATH | winget install lives in `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gitleaks.Gitleaks_*`; a shell started before install lacks it — prepend that dir to PATH |
+| Security sweep | history `gitleaks git --redact .`; deps `uv export --locked --no-hashes --no-emit-project > reqs.txt` then `uvx pip-audit -r reqs.txt --no-deps` (`gitleaks dir .` also flags test strings inside `.venv`: ignore those) |
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
 ## Status
-- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) · 1.5 read-only API (FastAPI) — all on `main`, CI green
-- **In review:** Phase 1.6 dashboard (branch `feat/phase-1.6-dashboard`)
-- **Next:** ops: schedule daily scrape → harmonize → detect (trends need ≥ 8 covered weeks); Phase 1.7 review & hardening
+- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) · 1.5 read-only API (FastAPI) · 1.6 Streamlit dashboard · 1.7 review & hardening — **Phase 1 (MVP) complete** (2026-11-01), all on `main`, CI green
+- **Next:** ops: schedule daily scrape → harmonize → detect (trends need ≥ 8 covered weeks); Phase 2 (posting duration, stock correlation, more ATS sources); deferred minors in TASKS.md backlog
 
 ## Approved Structure (2026-10-31)
 - `src/jobsignal/` layout: `config.py`, `logger.py`, `models.py`, `extraction/`, `harmonization/`,
