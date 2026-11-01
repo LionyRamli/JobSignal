@@ -1,0 +1,14 @@
+# Safe defaults for the JobSignal dashboard (scripts/run_dashboard.py also passes the address).
+# Streamlit otherwise listens on ALL interfaces and the dashboard has no login.
+
+[server]
+address = "127.0.0.1"
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# generic messages in the browser; tracebacks only in the server console
+showErrorDetails = "none"
+toolbarMode = "viewer"
