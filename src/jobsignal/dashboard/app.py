@@ -9,6 +9,7 @@ via st.dataframe / st.text, and links only for http(s) URLs.
 """
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 import pandas as pd
@@ -21,12 +22,15 @@ from jobsignal.dashboard.alerts import (
     describe,
     group_alerts,
     safe_url,
+    stale_companies,
 )
-from jobsignal.dashboard.charts import trend_chart, z_chart
+from jobsignal.dashboard.charts import composition_chart, trend_chart, z_chart
 from jobsignal.dashboard.client import ApiClient, ApiError, make_client
-from jobsignal.dashboard.trends import previous_week_run
+from jobsignal.dashboard.trends import company_frame, previous_week_run
 
 CACHE_TTL_SECONDS = 60
+PAGE_SIZE = 200  # postings per page; more only on a click
+COMPANY_TREND_WEEKS = 12
 SIGNALS_LIMIT = 500
 MAX_TREND_ROWS = 50  # trends are recomputed server-side (~0.1 s each): top groups only
 ALL = "All"
@@ -36,6 +40,7 @@ PROVISIONAL = (
     "Provisional: published-date shares are survivorship-biased. Treat as a lead, not evidence."
 )
 NOT_ENOUGH_HISTORY = "Not enough history yet"
+STALE = "Stale data: {tokens}. Last scrape is older than 36 h or did not finish ok."
 
 
 @st.cache_data(ttl=CACHE_TTL_SECONDS, show_spinner=False)
@@ -130,11 +135,7 @@ def _postings_frame(postings) -> pd.DataFrame:
     return pd.DataFrame(
         {
             "title": [p.title for p in postings],
-            "locations": [
-                ", ".join(loc.city or loc.region_code or loc.country_code or loc.kind
-                          for loc in p.locations)
-                for p in postings
-            ],
+            "locations": [_locations(p) for p in postings],
             "url": [safe_url(p.url) for p in postings],
         },
         dtype=object,
@@ -217,6 +218,119 @@ def _alerts_tab(api: Api, runs, filters: Filters) -> None:
     _alert_detail(api, selected, trends.get(selected))
 
 
+def _locations(posting) -> str:
+    return ", ".join(
+        loc.city or loc.region_code or loc.country_code or loc.kind for loc in posting.locations
+    )
+
+
+def _load_more(api: Api, query: dict[str, Any]) -> None:
+    """Button callback: fetch exactly ONE more page and append it (runs before the rerun)."""
+    state = st.session_state["postings"]
+    page = api.postings_page(**query, limit=PAGE_SIZE, cursor=state["cursor"])
+    state["rows"] = [*state["rows"], *page.items]
+    state["cursor"] = page.next_cursor
+
+
+def _postings_section(api: Api, company: str, meta) -> None:
+    left, middle, right = st.columns(3)
+    family = left.selectbox("Role family", [ALL, *meta.role_families], key="role_family_filter")
+    seniority = middle.selectbox("Seniority", [ALL, *meta.seniorities], key="seniority_filter")
+    country = right.text_input("Country (ISO code)", key="country_filter").strip().upper()
+    query = {
+        "company": company,
+        "role_family": _choice(family),
+        "seniority": _choice(seniority),
+        "country": country or None,
+    }
+    key = tuple(query.values())
+    state = st.session_state.get("postings")
+    if state is None or state["key"] != key:  # new filter set: start over with one page
+        page = api.postings_page(**query, limit=PAGE_SIZE)
+        state = {"key": key, "rows": list(page.items), "cursor": page.next_cursor}
+        st.session_state["postings"] = state
+    rows = state["rows"]
+    more = " · more available" if state["cursor"] else ""
+    st.caption(f"Showing {len(rows)} postings · sorting applies to loaded rows{more}")
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "title": [p.title for p in rows],
+                "role_family": [p.role_family for p in rows],
+                "seniority": [p.seniority for p in rows],
+                "locations": [_locations(p) for p in rows],
+                "first_seen_at": [p.first_seen_at for p in rows],
+                "url": [safe_url(p.url) for p in rows],
+            },
+            dtype=object,
+        ),
+        hide_index=True,
+        column_config={"url": st.column_config.LinkColumn("url")},
+    )
+    if state["cursor"]:
+        st.button(f"Load {PAGE_SIZE} more", key="load_more", on_click=_load_more, args=(api, query))
+
+
+def _companies_tab(api: Api, companies, meta) -> None:
+    if not companies:
+        st.info("No companies scraped yet. Run: uv run python scripts/run_scrape.py <tokens>")
+        return
+    trends = api.company_trends(weeks=COMPANY_TREND_WEEKS)
+    st.dataframe(
+        company_frame(companies, trends, datetime.now(UTC)),
+        hide_index=True,
+        column_config={
+            "open_trend": st.column_config.LineChartColumn("open postings (12 weeks)"),
+            "new_trend": st.column_config.LineChartColumn("new postings (12 weeks)"),
+            "d_open_prev_week": st.column_config.NumberColumn("Δ vs prev week", format="%+d"),
+        },
+    )
+    company = st.selectbox("Company", [c.board_token for c in companies], key="company_view")
+    composition = api.composition(company)
+    st.caption(f"{composition.open_postings} open postings")
+    for column, (counts, title) in zip(
+        st.columns(3),
+        [
+            (composition.by_role_family, "Role family"),
+            (composition.by_seniority, "Seniority"),
+            (composition.by_country, "Country"),
+        ],
+        strict=True,
+    ):
+        column.altair_chart(composition_chart(counts, title), use_container_width=True)
+    _postings_section(api, company, meta)
+
+
+def _runs_tab(api: Api, runs, filters: Filters) -> None:
+    health = api.health()
+    left, middle, right = st.columns(3)
+    left.metric("API", health.status)
+    middle.metric("Taxonomy", health.taxonomy_version)
+    right.metric("Signals", health.signals_version)
+    if not runs:
+        st.info(NO_RUNS)
+        return
+    st.dataframe(
+        pd.DataFrame(
+            {
+                "id": [r.id for r in runs],
+                "as_of": [r.as_of for r in runs],
+                "computed_at": [r.computed_at for r in runs],
+                "signals_version": [r.signals_version for r in runs],
+                "taxonomy_version": [r.taxonomy_version for r in runs],
+            }
+        ),
+        hide_index=True,
+    )
+    selected = (
+        runs[0]
+        if filters.run == "latest"
+        else next((r for r in runs if str(r.id) == filters.run), runs[0])
+    )
+    st.caption(f"Parameters of run #{selected.id}")
+    st.json(selected.params)
+
+
 def _render(client: ApiClient) -> None:
     api = Api(client)
     # first reads happen before any widget: an unreachable API renders only the error
@@ -224,10 +338,16 @@ def _render(client: ApiClient) -> None:
     companies = api.companies()
     meta = api.meta()
     filters = _sidebar(api, runs, companies, meta)
-    alerts, _companies_tab, _runs_tab = st.tabs(["Alerts", "Companies", "Runs & health"])
+    stale = stale_companies(companies, datetime.now(UTC))
+    if stale:
+        st.warning(STALE.format(tokens=", ".join(stale)))
+    alerts, companies_tab, runs_tab = st.tabs(["Alerts", "Companies", "Runs & health"])
     with alerts:
         _alerts_tab(api, runs, filters)
-    # Companies and Runs & health tabs: Task 6
+    with companies_tab:
+        _companies_tab(api, companies, meta)
+    with runs_tab:
+        _runs_tab(api, runs, filters)
 
 
 def main() -> None:
