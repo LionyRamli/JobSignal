@@ -24,7 +24,7 @@ DOWN = (
 )
 
 
-KPIS = ("Alerts", "Expansions", "Contractions", "Companies with alerts")
+KPIS = ("Active Alerts", "Expansion Signals", "Contraction Signals", "Companies Flagged")
 
 
 def metrics(at) -> dict[str, str]:
@@ -44,10 +44,13 @@ def test_alerts_tab_renders_grouped_signals(seeded_api):
     at = run_app(ApiClient(seeded_api))
     assert not at.exception
     assert metrics(at) == {
-        "Alerts": "2", "Expansions": "1", "Contractions": "1", "Companies with alerts": "1",
+        "Active Alerts": "2", "Expansion Signals": "1", "Contraction Signals": "1",
+        "Companies Flagged": "1",
     }  # fmt: skip
     table = alerts_table(at)
-    assert list(table["band"]) == ["yellow", "yellow"]
+    assert list(table["band"]) == ["Unusual", "Unusual"]  # business words, not codes
+    assert list(table["direction"]) == ["▼ Contraction", "▲ Expansion"]
+    assert set(table["detector"]) <= {"Total Hiring Volume", "Strategic Focus Shift / Role Share"}
     assert list(table["z"]) == [-5.0, 3.2]
     assert all(len(cell) <= 8 for cell in table["trend"])  # known weeks of the 8-week window
 
@@ -74,7 +77,8 @@ def test_kpi_delta_vs_previous_week_run(seeded_api, migrated_url):
     engine.dispose()
     at = run_app(ApiClient(seeded_api))
     assert deltas(at) == {
-        "Alerts": "1", "Expansions": "1", "Contractions": "0", "Companies with alerts": "0",
+        "Active Alerts": "1", "Expansion Signals": "1", "Contraction Signals": "0",
+        "Companies Flagged": "0",
     }  # fmt: skip
 
 
@@ -90,14 +94,14 @@ def test_inspect_alert_shows_drilldown(seeded_api):
     assert not at.exception
     titles = [list(f.value["title"]) for f in at.dataframe if "title" in f.value.columns]
     assert ["Senior Account Executive"] in titles
-    assert any(t.value.startswith("acme · sales · GB:") for t in at.text)
+    assert any(t.value.startswith("acme · Sales · GB:") for t in at.text)
 
 
 def test_filters_reach_the_api(seeded_api):
     at = run_app(ApiClient(seeded_api))
     at.selectbox(key="direction").select("contraction").run()
     assert list(alerts_table(at)["z"]) == [-5.0]
-    assert metrics(at)["Alerts"] == "1"
+    assert metrics(at)["Active Alerts"] == "1"
 
 
 def unreachable() -> httpx.Client:

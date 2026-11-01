@@ -12,3 +12,69 @@ gatherUsageStats = false
 # generic messages in the browser; tracebacks only in the server console
 showErrorDetails = "none"
 toolbarMode = "viewer"
+
+# Two themes: a dark "trading terminal" and a light daylight mode. Defining both makes
+# Streamlit offer System / Light / Dark in its ⋮ menu (it hides the picker for one theme).
+# Read from the cwd only: scripts/run_dashboard.py launches from the project root.
+# Contrast is tested per mode (tests/unit/dashboard/test_theme.py): text >= 7:1,
+# accents >= 4.5:1.
+#
+# chartCategoricalColors is the charts' ONLY colour source, by position (charts.SLOTS):
+#   extreme, unusual, below-alert, series line/bars, value-label ink, normal-range band
+# The browser swaps it on a theme switch, so charts recolour without a rerun.
+
+[theme]  # shared by both modes
+font = "sans-serif"
+codeFont = "monospace"
+baseRadius = "small"
+buttonRadius = "small"
+showWidgetBorder = true
+showSidebarBorder = true
+metricValueFontSize = "2.25rem"
+metricValueFontWeight = 700
+
+[theme.dark]
+primaryColor = "#38BDF8"
+backgroundColor = "#0A0F1A"
+secondaryBackgroundColor = "#111827"
+textColor = "#E6EDF5"
+linkColor = "#38BDF8"
+borderColor = "#1F2A3C"
+dataframeBorderColor = "#1F2A3C"
+dataframeHeaderBackgroundColor = "#111827"
+greenColor = "#22E58B"
+greenTextColor = "#22E58B"
+redColor = "#FF4D5E"
+redTextColor = "#FF4D5E"
+yellowColor = "#FFB020"
+yellowTextColor = "#FFB020"
+blueColor = "#38BDF8"
+blueTextColor = "#38BDF8"
+chartCategoricalColors = ["#FF4D5E", "#FFB020", "#64748B", "#38BDF8", "#94A3B8", "#1E293B"]
+
+[theme.dark.sidebar]
+backgroundColor = "#0D1424"
+secondaryBackgroundColor = "#111827"
+
+[theme.light]
+primaryColor = "#0369A1"
+backgroundColor = "#F7F9FC"
+secondaryBackgroundColor = "#EAEFF6"
+textColor = "#0B1220"
+linkColor = "#0369A1"
+borderColor = "#CBD5E1"
+dataframeBorderColor = "#D5DCE6"
+dataframeHeaderBackgroundColor = "#EAEFF6"
+greenColor = "#047857"
+greenTextColor = "#047857"
+redColor = "#C81E1E"
+redTextColor = "#B91C1C"
+yellowColor = "#B45309"
+yellowTextColor = "#92400E"
+blueColor = "#0369A1"
+blueTextColor = "#0369A1"
+chartCategoricalColors = ["#C81E1E", "#B45309", "#64748B", "#0369A1", "#475569", "#E2E8F0"]
+
+[theme.light.sidebar]
+backgroundColor = "#EEF2F7"
+secondaryBackgroundColor = "#E2E8F0"

@@ -2,6 +2,7 @@
 
 ## Active
 
+- [ ] **UI/UX overhaul (dashboard)** - dark "terminal" + light daylight themes (`.streamlit/config.toml`, switched in Streamlit's ⋮ menu; charts recolour live from the theme palette); bilingual UI EN / 繁體中文 (`dashboard/glossary.py`, sidebar `Language / 語言`, `?lang=` URL); business terms (Anomaly Score (Z), Total Hiring Volume = Growth / Expansion, Strategic Focus Shift / Role Share, Trend (Expansion vs. Hiring Freeze)). On branch `feat/ui-overhaul` (2026-11-01): PR to open, CI, merge
 - [ ] **Ops: schedule daily scrape → harmonize → detect** - the volume detector needs ≥ 8 continuously covered weeks; history is now the bottleneck
 
 ## Backlog

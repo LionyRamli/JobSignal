@@ -10,11 +10,14 @@ from tests.conftest import PROJECT_ROOT
 @pytest.fixture
 def launches():
     calls: list[list[str]] = []
+    cwds: list = []
 
-    def run(argv: list[str]) -> int:
+    def run(argv: list[str], cwd=None) -> int:
         calls.append(argv)
+        cwds.append(cwd)
         return 0
 
+    run.cwds = cwds
     return calls, run
 
 
@@ -37,6 +40,13 @@ def test_defaults_bind_loopback(launches):
     assert flag(argv, "--client.toolbarMode") == "viewer"
 
 
+def test_launches_from_the_project_root_so_the_theme_applies(launches):
+    """.streamlit/config.toml (the dark theme) is read from the cwd only: pin the cwd."""
+    _calls, run = launches
+    assert serve.main([], run=run) == 0  # the autouse fixture chdirs to tmp_path
+    assert run.cwds == [serve.PROJECT_ROOT] == [PROJECT_ROOT]
+
+
 @pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.10", "example.com"])  # noqa: S104
 def test_non_loopback_requires_allow_remote(launches, host, capsys):
     calls, run = launches
@@ -56,7 +66,7 @@ def test_allow_remote_warns(launches, capsys):
 
 
 def test_launcher_returns_streamlit_exit_code():
-    assert serve.main([], run=lambda argv: 3) == 3
+    assert serve.main([], run=lambda argv, cwd=None: 3) == 3
 
 
 def test_app_path_is_the_entry_point():

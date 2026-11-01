@@ -49,6 +49,8 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "S", "PT", "RUF"]
+# full-width punctuation is correct in Traditional Chinese UI copy (dashboard/glossary.py)
+allowed-confusables = ["（", "）", "，", "／", "：", "；", "？", "＝"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S101", "S105", "S106", "S311"]  # pytest asserts; seeded random for test data
