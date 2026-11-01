@@ -2,7 +2,6 @@
 
 ## Active
 
-- [ ] **UI/UX overhaul (dashboard)** - dark "terminal" + light daylight themes (`.streamlit/config.toml`, switched in Streamlit's ⋮ menu; charts recolour live from the theme palette); bilingual UI EN / 繁體中文 (`dashboard/glossary.py`, sidebar `Language / 語言`, `?lang=` URL); business terms (Anomaly Score (Z), Total Hiring Volume = Growth / Expansion, Strategic Focus Shift / Role Share, Trend (Expansion vs. Hiring Freeze)). On branch `feat/ui-overhaul` (2026-11-01): PR to open, CI, merge
 - [ ] **Ops: schedule daily scrape → harmonize → detect** - the volume detector needs ≥ 8 continuously covered weeks; history is now the bottleneck
 
 ## Backlog
@@ -26,6 +25,7 @@
 
 ## Done
 
+- [x] ~~UI/UX overhaul (dashboard): merged to main via PR #10, CI green~~ (2026-11-01) - dark "trading terminal" + light themes (Streamlit ⋮ menu; charts recolour live from the theme palette); bilingual EN / 繁體中文 (`dashboard/glossary.py`, sidebar `Language / 語言`, `?lang=` URL); business terms + tooltips on every filter, KPI, column and chart; 683 tests
 - [x] ~~Hotfix: dashboard sparklines rendered as `,,,,675` error text~~ (2026-11-01) - Streamlit chart columns reject a whole cell on any None/NaN element; cells now plot known weeks only (`trends.chart_values`), deltas still from raw weeks; app-level guard checks every chart column
 - [x] ~~Create CLAUDE.md and TASKS.md~~ (2026-10-31)
 - [x] ~~Approve folder structure (+ alembic, central logging)~~ (2026-10-31)

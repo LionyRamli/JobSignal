@@ -76,7 +76,7 @@ and B2B opportunities.
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
 ## Status
-- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) · 1.5 read-only API (FastAPI) · 1.6 Streamlit dashboard · 1.7 review & hardening — **Phase 1 (MVP) complete** (2026-11-01), all on `main`, CI green
+- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) · 1.5 read-only API (FastAPI) · 1.6 Streamlit dashboard · 1.7 review & hardening · UI/UX overhaul (dark/light themes, EN/繁體中文, PR #10) — **Phase 1 (MVP) complete** (2026-11-01), all on `main`, CI green
 - **Next:** ops: schedule daily scrape → harmonize → detect (trends need ≥ 8 covered weeks); Phase 2 (posting duration, stock correlation, more ATS sources); deferred minors in TASKS.md backlog
 
 ## Approved Structure (2026-10-31)
