@@ -21,7 +21,7 @@ def postings_for_score(session: Session, score: SignalScore) -> list[int]:
     run = session.get(SignalRun, score.run_id)
     params = DetectorParams(**json.loads(run.params))
     company = session.get(Company, score.company_id).board_token
-    events = to_frame(opening_rows(session), score.basis)
+    events = to_frame(opening_rows(session, company=company), score.basis)  # this company only
     if score.detector == "volume":
         weeks = {score.week_start}
     else:

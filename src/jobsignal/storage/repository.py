@@ -9,7 +9,7 @@ from datetime import date, datetime
 from typing import NamedTuple
 
 from sqlalchemy import func, insert, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from jobsignal.harmonization.locations import LocationParse
 from jobsignal.harmonization.roles import RoleClassification
@@ -247,7 +247,7 @@ class OpeningRow(NamedTuple):
     company_first_snapshot_at: datetime | None
 
 
-def opening_rows(session: Session) -> list[OpeningRow]:
+def opening_rows(session: Session, company: str | None = None) -> list[OpeningRow]:
     """One row per posting and distinct located country (None when it has no country)."""
     first_snapshot = (
         select(Snapshot.company_id, func.min(Snapshot.fetched_at).label("first_at"))
@@ -272,6 +272,8 @@ def opening_rows(session: Session) -> list[OpeningRow]:
         .distinct()
         .order_by(PostingRecord.id)
     )
+    if company is not None:
+        statement = statement.where(Company.board_token == company)
     utc = UTCDateTime()
     rows = []
     for pid, company, family, country, seen, published, first_at in session.execute(statement):
@@ -431,5 +433,163 @@ def latest_signals(session: Session, limit: int = 50) -> list[SignalScore]:
             .where(SignalScore.run_id == newest, SignalScore.is_signal.is_(True))
             .order_by(func.abs(SignalScore.z).desc(), SignalScore.id)
             .limit(limit)
+        )
+    )
+
+
+class CompanySummary(NamedTuple):
+    board_token: str
+    source: str
+    open_postings: int
+    last_snapshot_at: datetime | None
+    last_snapshot_status: str | None
+
+
+def company_summaries(session: Session, board_token: str | None = None) -> list[CompanySummary]:
+    """Companies with their open-posting count and latest snapshot, sorted by token."""
+    open_counts = (
+        select(PostingRecord.company_id, func.count().label("n"))
+        .where(PostingRecord.closed_at.is_(None))
+        .group_by(PostingRecord.company_id)
+        .subquery()
+    )
+    latest_id = (
+        select(Snapshot.company_id, func.max(Snapshot.id).label("snapshot_id"))
+        .group_by(Snapshot.company_id)
+        .subquery()
+    )
+    statement = (
+        select(
+            Company.board_token,
+            Company.source,
+            func.coalesce(open_counts.c.n, 0),
+            Snapshot.fetched_at,
+            Snapshot.status,
+        )
+        .outerjoin(open_counts, open_counts.c.company_id == Company.id)
+        .outerjoin(latest_id, latest_id.c.company_id == Company.id)
+        .outerjoin(Snapshot, Snapshot.id == latest_id.c.snapshot_id)
+        .order_by(Company.board_token)
+    )
+    if board_token is not None:
+        statement = statement.where(Company.board_token == board_token)
+    return [CompanySummary(*row) for row in session.execute(statement)]
+
+
+def list_postings(
+    session: Session,
+    *,
+    company: str | None = None,
+    role_family: str | None = None,
+    seniority: str | None = None,
+    country: str | None = None,
+    open_only: bool = True,
+    after_id: int | None = None,
+    limit: int = 50,
+) -> list[PostingRecord]:
+    """Postings ordered by id (keyset pagination), locations and company eager-loaded."""
+    statement = select(PostingRecord).options(
+        selectinload(PostingRecord.locations), selectinload(PostingRecord.company)
+    )
+    if company is not None:
+        statement = statement.join(Company, Company.id == PostingRecord.company_id).where(
+            Company.board_token == company
+        )
+    if role_family is not None:
+        statement = statement.where(PostingRecord.role_family == role_family)
+    if seniority is not None:
+        statement = statement.where(PostingRecord.seniority == seniority)
+    if country is not None:
+        in_country = (
+            select(posting_locations.c.posting_id)
+            .join(Location, Location.id == posting_locations.c.location_id)
+            .where(
+                posting_locations.c.posting_id == PostingRecord.id,
+                Location.country_code == country,
+            )
+        )
+        statement = statement.where(in_country.exists())
+    if open_only:
+        statement = statement.where(PostingRecord.closed_at.is_(None))
+    if after_id is not None:
+        statement = statement.where(PostingRecord.id > after_id)
+    return list(session.scalars(statement.order_by(PostingRecord.id).limit(limit)))
+
+
+def get_posting(session: Session, posting_id: int) -> PostingRecord | None:
+    return session.scalar(
+        select(PostingRecord)
+        .options(selectinload(PostingRecord.locations), selectinload(PostingRecord.company))
+        .where(PostingRecord.id == posting_id)
+    )
+
+
+def list_signal_runs(session: Session, limit: int = 50) -> list[SignalRun]:
+    """Runs, newest as_of first (a later backtest of an older week sorts below the live run)."""
+    return list(
+        session.scalars(
+            select(SignalRun)
+            .order_by(SignalRun.as_of.desc(), SignalRun.computed_at.desc(), SignalRun.id.desc())
+            .limit(limit)
+        )
+    )
+
+
+def resolve_run(session: Session, run: str) -> SignalRun | None:
+    """'latest' (newest as_of) or a positive integer id; anything else raises ValueError."""
+    if run == "latest":
+        runs = list_signal_runs(session, limit=1)
+        return runs[0] if runs else None
+    if not (run.isascii() and run.isdigit() and 0 < int(run) <= 2**63 - 1):
+        raise ValueError("run must be 'latest' or a positive integer id")
+    return session.get(SignalRun, int(run))
+
+
+def list_scores(
+    session: Session,
+    run_id: int,
+    *,
+    detector: str | None = None,
+    direction: str | None = None,
+    level: str | None = None,
+    company: str | None = None,
+    min_abs_z: float | None = None,
+    signals_only: bool = True,
+    limit: int = 100,
+) -> list[tuple[SignalScore, str]]:
+    """Scores of one run with their company token, strongest |z| first, NULL z last."""
+    statement = (
+        select(SignalScore, Company.board_token)
+        .join(Company, Company.id == SignalScore.company_id)
+        .where(SignalScore.run_id == run_id)
+    )
+    if detector is not None:
+        statement = statement.where(SignalScore.detector == detector)
+    if direction is not None:
+        statement = statement.where(SignalScore.direction == direction)
+    if level is not None:
+        statement = statement.where(SignalScore.level == level)
+    if company is not None:
+        statement = statement.where(Company.board_token == company)
+    if min_abs_z is not None:
+        statement = statement.where(func.abs(SignalScore.z) >= min_abs_z)
+    if signals_only:
+        statement = statement.where(SignalScore.is_signal.is_(True))
+    statement = statement.order_by(
+        func.abs(SignalScore.z).desc().nulls_last(), SignalScore.id
+    ).limit(limit)
+    return [(score, token) for score, token in session.execute(statement)]
+
+
+def get_postings(session: Session, posting_ids: list[int]) -> list[PostingRecord]:
+    """Postings by id in one query (locations eager-loaded), in id order."""
+    if not posting_ids:
+        return []
+    return list(
+        session.scalars(
+            select(PostingRecord)
+            .options(selectinload(PostingRecord.locations))
+            .where(PostingRecord.id.in_(posting_ids))
+            .order_by(PostingRecord.id)
         )
     )

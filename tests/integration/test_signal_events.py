@@ -124,3 +124,17 @@ def test_ok_snapshot_stats_counts_new_postings_and_skips_non_ok(session, company
     snapshot(session, company, [posting(i, ok_at) for i in "abcd"], ok_at)
 
     assert ok_snapshot_stats(session) == {"acme": [(T0, 2, 2), (ok_at, 4, 1)]}
+
+
+def test_opening_rows_can_be_scoped_to_one_company(session, company):
+    other = get_or_create_company(session, "greenhouse", "other", T0)
+    snapshot(session, company, [posting("a", T0)], T0)
+    run = start_run(session, T0)
+    record_snapshot(session, run, other, [Posting(source="greenhouse", company="other",
+                    external_id="z", title="Engineer", location_raw=None, department=None,
+                    url="https://x.io/z", first_published=None, updated_at=None,
+                    fetched_at=T0)], T0)  # fmt: skip
+    session.commit()
+
+    assert {r.company for r in opening_rows(session)} == {"acme", "other"}
+    assert {r.company for r in opening_rows(session, company="other")} == {"other"}

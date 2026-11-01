@@ -26,6 +26,7 @@ uv run alembic upgrade head  # create/migrate the local SQLite database
 uv run python scripts/run_scrape.py anthropic databricks stripe  # scrape + store
 uv run python scripts/run_harmonize.py                          # role + location taxonomy
 uv run python scripts/run_detect.py                             # hiring signals
+uv run python scripts/run_api.py                                # read-only API on 127.0.0.1:8000
 uv run pytest                # run the test suite
 uv run ruff check . && uv run ruff format --check .
 ```
@@ -107,6 +108,30 @@ taxonomy version and the raw z, observed and baseline values of every row.
 - **Drill-down.** `jobsignal.signals.drilldown.postings_for_score(session, score)` lists the
   postings behind any score.
 
+## API
+
+A read-only FastAPI service. Every route is a `GET` under `/api/v1`. Interactive docs are at
+`http://127.0.0.1:8000/docs`.
+
+| Route | Returns |
+|-------|---------|
+| `/health` | `ok`, or 503 `schema_missing`, plus the taxonomy and signals versions |
+| `/meta` | Role families, seniorities, location kinds, signal levels and detectors (for filters) |
+| `/companies`, `/companies/{board_token}` | Open-posting counts and the latest scrape |
+| `/postings` | Filters: `company`, `role_family`, `seniority`, `country`, `open`. Up to 200 items per page, with a cursor (`next_cursor`) |
+| `/postings/{id}` | One posting with its canonical locations and open/close history |
+| `/signal-runs` | Runs, newest `as_of` first, with their params and versions |
+| `/signals` | `run=latest` or an id; filters `detector`, `direction`, `level`, `company`, `min_abs_z`, `signals_only`. Raw z and inputs are included; `mix_shift` rows add `share_recent`/`share_baseline` and are marked `provisional` |
+| `/signals/{id}` | One score, its run and the postings behind it (drill-down) |
+
+**Security defaults**
+- The server binds `127.0.0.1`. To bind anything else, `JOBSIGNAL_API_KEY` must be set, or the
+  server refuses to start. Then every data route needs the `X-API-Key` header (compared in
+  constant time); `/health` stays open.
+- Always start the API with `scripts/run_api.py`. Running `uvicorn` directly bypasses the bind
+  check.
+- Errors never include tracebacks. CORS is off unless `JOBSIGNAL_API_CORS_ORIGINS` is set.
+
 ## Configuration
 
 Settings load from `JOBSIGNAL_*` environment variables or a local `.env` file:
@@ -115,3 +140,5 @@ Settings load from `JOBSIGNAL_*` environment variables or a local `.env` file:
 |----------|---------|---------|
 | `JOBSIGNAL_DATABASE_URL` | `sqlite:///jobsignal.db` | SQLAlchemy URL (PostgreSQL in production) |
 | `JOBSIGNAL_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL` |
+| `JOBSIGNAL_API_KEY` | *(empty)* | Required to bind the API beyond localhost; sent as `X-API-Key` |
+| `JOBSIGNAL_API_CORS_ORIGINS` | *(empty)* | Comma-separated origins allowed by CORS (GET only) |

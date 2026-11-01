@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -18,6 +18,18 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///jobsignal.db"
     log_level: LogLevel = "INFO"
+    # API: a key is REQUIRED to bind beyond localhost; never logged or echoed.
+    api_key: SecretStr | None = None
+    api_cors_origins: str = ""  # comma-separated origins; empty = CORS off
+
+    @field_validator("api_key", mode="before")
+    @classmethod
+    def _blank_key_is_none(cls, value: object) -> object:
+        return None if isinstance(value, str) and not value.strip() else value
+
+    @property
+    def cors_origins(self) -> list[str]:
+        return [o.strip() for o in self.api_cors_origins.split(",") if o.strip()]
 
     @field_validator("log_level", mode="before")
     @classmethod
