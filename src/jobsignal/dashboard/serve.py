@@ -56,5 +56,10 @@ def main(argv: list[str] | None = None, run: Callable[[list[str]], int] = subpro
             "true",
             "--browser.gatherUsageStats",
             "false",
+            # also in .streamlit/config.toml, but that is read only from the cwd
+            "--client.showErrorDetails",
+            "none",
+            "--client.toolbarMode",
+            "viewer",
         ]
     )

@@ -161,24 +161,37 @@ def cell_trend(
 def trends_for_scores(
     session: Session, scores: list[tuple[SignalScore, str, SignalRun]]
 ) -> dict[int, list[TrendPoint]]:
-    """Trends for stored scores; events load once per company, coverage once in total.
+    """Trends for stored scores, each recomputed from the data its run could see.
 
-    Role families are read as they are now (like the drill-down), so runs scored under an
-    older taxonomy can differ slightly.
+    Postings first seen and snapshots fetched after the run's ``computed_at`` are left out,
+    so a later scrape (e.g. a backdated published date) cannot move the trend away from the
+    stored score. Events load once per company and coverage once in total. Role families are
+    read as they are now (like the drill-down), so runs scored under an older taxonomy can
+    differ slightly.
     """
     if not scores:
         return {}
-    available = {
-        company: available_weeks([SnapshotStat(*stat) for stat in rows])
-        for company, rows in ok_snapshot_stats(session).items()
-    }
-    frames: dict[str, tuple[pd.DataFrame, pd.DataFrame]] = {}
+    stats = ok_snapshot_stats(session)
+    rows_by_company: dict[str, list] = {}
+    frames: dict[tuple[str, datetime], tuple[pd.DataFrame, pd.DataFrame]] = {}
+    coverage: dict[datetime, dict[str, set[date]]] = {}
     result = {}
     for score, company, run in scores:
-        if company not in frames:
-            rows = opening_rows(session, company=company)
-            frames[company] = (to_frame(rows, "observed"), to_frame(rows, "published"))
-        observed, published = frames[company]
+        cutoff = run.computed_at
+        if cutoff not in coverage:
+            coverage[cutoff] = {
+                token: available_weeks(
+                    [SnapshotStat(*stat) for stat in snapshots if stat[0] <= cutoff]
+                )
+                for token, snapshots in stats.items()
+            }
+        if company not in rows_by_company:
+            rows_by_company[company] = opening_rows(session, company=company)
+        if (company, cutoff) not in frames:
+            seen = [row for row in rows_by_company[company] if row.first_seen_at <= cutoff]
+            frames[company, cutoff] = (to_frame(seen, "observed"), to_frame(seen, "published"))
+        observed, published = frames[company, cutoff]
+        available = coverage[cutoff]
         result[score.id] = cell_trend(
             observed,
             published,

@@ -32,6 +32,9 @@ def test_defaults_bind_loopback(launches):
     assert flag(argv, "--server.port") == "8501"
     assert flag(argv, "--server.headless") == "true"
     assert flag(argv, "--browser.gatherUsageStats") == "false"
+    # pinned on the command line too: .streamlit/config.toml is only read from the cwd
+    assert flag(argv, "--client.showErrorDetails") == "none"
+    assert flag(argv, "--client.toolbarMode") == "viewer"
 
 
 @pytest.mark.parametrize("host", ["0.0.0.0", "192.168.1.10", "example.com"])  # noqa: S104

@@ -1,5 +1,7 @@
 import json
 
+import pytest
+
 from jobsignal.api.schemas import CountOut
 from jobsignal.dashboard.alerts import alerts_frame, group_alerts
 from jobsignal.dashboard.charts import BAND_DOMAIN, composition_chart, trend_chart, z_chart
@@ -55,8 +57,9 @@ def test_trend_chart_baseline_band_for_volume_only():
     volume = spec(trend_chart(trend(1, [2.0, 3.0], [0.5, 1.0]), signal(id=1)))
     bands = [r for rows in volume["datasets"].values() for r in rows if "low" in r]
     assert bands
-    assert bands[0]["low"] == 3.14 - 3 * 1.2
-    assert bands[0]["high"] == 3.14 + 3 * 1.2
+    # the detector's sigma: sqrt(max(std^2, mean, 1)) = sqrt(3.14) here, not std = 1.2
+    assert bands[0]["low"] == pytest.approx(3.14 - 3 * 3.14**0.5)
+    assert bands[0]["high"] == pytest.approx(3.14 + 3 * 3.14**0.5)
     share = spec(trend_chart(trend(2, [0.1, 0.12], [0.5, 1.0], "share"), mix(id=2)))
     assert not [r for rows in share["datasets"].values() for r in rows if "low" in r]
 
@@ -67,3 +70,12 @@ def test_composition_chart_labels_unclassified():
     )
     rows = [r for rows in datasets(chart) for r in rows]
     assert {(r["label"], r["count"]) for r in rows} == {("sales", 3), ("unclassified", 1)}
+
+
+def test_trend_band_never_collapses_on_a_zero_baseline():
+    """A zero baseline (std 0, mean 0) is scored with sigma 1: the band must not be a line."""
+    flat = signal(id=1, baseline_mean=0.0, baseline_std=0.0, observed=2.0, z=2.0)
+    chart = spec(trend_chart(trend(1, [0.0, 2.0], [None, 2.0]), flat))
+    bands = [r for rows in chart["datasets"].values() for r in rows if "low" in r]
+    bands = bands or [r for rows in find_all(chart, "values") for r in rows if "low" in r]
+    assert (bands[0]["low"], bands[0]["high"]) == (-3.0, 3.0)

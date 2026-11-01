@@ -33,3 +33,9 @@ def test_no_unsafe_html_in_dashboard_source():
         assert "unsafe_allow_html" not in text, path
         assert "components.html" not in text, path
         assert "st.html" not in text, path
+
+
+def test_no_deprecated_streamlit_width_argument():
+    """use_container_width is past its removal date; width="stretch" replaces it."""
+    for path in dashboard_sources():
+        assert "use_container_width" not in path.read_text(encoding="utf-8"), path

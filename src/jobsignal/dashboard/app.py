@@ -96,8 +96,9 @@ def _choice(value: str) -> str | None:
 def _sidebar(api: Api, runs, companies, meta) -> Filters:
     with st.sidebar:
         st.header("Filters")
-        if st.button("Refresh now"):
+        if st.button("Refresh now", key="refresh"):
             st.cache_data.clear()
+            st.session_state.pop("postings", None)  # loaded rows are stale too
             st.rerun()
         labels = {"latest": "Latest run"}
         labels |= {str(r.id): f"#{r.id} · as of {r.as_of:%Y-%m-%d %H:%M} UTC" for r in runs}
@@ -149,7 +150,7 @@ def _alert_detail(api: Api, signal_id: int, trend) -> None:
     if signal.provisional:
         st.warning(PROVISIONAL)
     if trend is not None:
-        st.altair_chart(trend_chart(trend, signal), use_container_width=True)
+        st.altair_chart(trend_chart(trend, signal), width="stretch")
         if all(p.z is None for p in trend.points):
             st.caption(NOT_ENOUGH_HISTORY)
     st.dataframe(
@@ -193,7 +194,7 @@ def _alerts_tab(api: Api, runs, filters: Filters) -> None:
         st.caption(f"Showing the top {SIGNALS_LIMIT} scores by |z|.")
     if len(groups) > MAX_TREND_ROWS:
         st.caption(f"Trends shown for the top {MAX_TREND_ROWS} alerts.")
-    st.altair_chart(z_chart(frame), use_container_width=True)
+    st.altair_chart(z_chart(frame), width="stretch")
     st.dataframe(
         frame,
         hide_index=True,
@@ -224,24 +225,17 @@ def _locations(posting) -> str:
     )
 
 
-def _load_more(api: Api, query: dict[str, Any]) -> None:
-    """Button callback: fetch exactly ONE more page and append it (runs before the rerun)."""
-    state = st.session_state["postings"]
-    page = api.postings_page(**query, limit=PAGE_SIZE, cursor=state["cursor"])
-    state["rows"] = [*state["rows"], *page.items]
-    state["cursor"] = page.next_cursor
-
-
-def _postings_section(api: Api, company: str, meta) -> None:
+def _postings_section(api: Api, company: str, meta, countries: list[str]) -> None:
     left, middle, right = st.columns(3)
     family = left.selectbox("Role family", [ALL, *meta.role_families], key="role_family_filter")
     seniority = middle.selectbox("Seniority", [ALL, *meta.seniorities], key="seniority_filter")
-    country = right.text_input("Country (ISO code)", key="country_filter").strip().upper()
+    # options come from the company's own composition: no free text, no invalid code
+    country = right.selectbox("Country", [ALL, *countries], key="country_filter")
     query = {
         "company": company,
         "role_family": _choice(family),
         "seniority": _choice(seniority),
-        "country": country or None,
+        "country": _choice(country),
     }
     key = tuple(query.values())
     state = st.session_state.get("postings")
@@ -267,8 +261,13 @@ def _postings_section(api: Api, company: str, meta) -> None:
         hide_index=True,
         column_config={"url": st.column_config.LinkColumn("url")},
     )
-    if state["cursor"]:
-        st.button(f"Load {PAGE_SIZE} more", key="load_more", on_click=_load_more, args=(api, query))
+    # handled in the script body (not an on_click callback) so an API failure reaches
+    # main()'s ApiError handler: callbacks run before the body, outside that try
+    if state["cursor"] and st.button(f"Load {PAGE_SIZE} more", key="load_more"):
+        page = api.postings_page(**query, limit=PAGE_SIZE, cursor=state["cursor"])
+        state["rows"] = [*state["rows"], *page.items]  # exactly ONE more page per click
+        state["cursor"] = page.next_cursor
+        st.rerun()
 
 
 def _companies_tab(api: Api, companies, meta) -> None:
@@ -297,8 +296,9 @@ def _companies_tab(api: Api, companies, meta) -> None:
         ],
         strict=True,
     ):
-        column.altair_chart(composition_chart(counts, title), use_container_width=True)
-    _postings_section(api, company, meta)
+        column.altair_chart(composition_chart(counts, title), width="stretch")
+    countries = sorted(c.key for c in composition.by_country if c.key)
+    _postings_section(api, company, meta, countries)
 
 
 def _runs_tab(api: Api, runs, filters: Filters) -> None:

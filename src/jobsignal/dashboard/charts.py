@@ -5,6 +5,7 @@ gray for "no band"; the band is always also shown as text (legend, tooltip, tabl
 so colour never carries the meaning alone. Missing weeks stay null: Vega-Lite draws a gap.
 """
 
+import math
 from collections.abc import Sequence
 
 import altair as alt
@@ -82,10 +83,12 @@ def trend_chart(trend: SignalTrend, signal: SignalOut) -> alt.VConcatChart:
         and signal.baseline_mean is not None
         and signal.baseline_std is not None
     ):
+        # the detector's own sigma (Poisson floor), so the band explains the z shown
+        sigma = math.sqrt(max(signal.baseline_std**2, signal.baseline_mean, 1.0))
         band = pd.DataFrame(
             {
-                "low": [signal.baseline_mean - 3 * signal.baseline_std],
-                "high": [signal.baseline_mean + 3 * signal.baseline_std],
+                "low": [signal.baseline_mean - 3 * sigma],
+                "high": [signal.baseline_mean + 3 * sigma],
             }
         )
         baseline = (
@@ -93,7 +96,9 @@ def trend_chart(trend: SignalTrend, signal: SignalOut) -> alt.VConcatChart:
             .mark_rect(color=BASELINE_FILL, opacity=0.6)
             .encode(y="low:Q", y2="high:Q")
         )
-        top = alt.layer(baseline, value_line)
+        top = alt.layer(baseline, value_line).properties(
+            title="shaded: latest week's baseline +/- 3 sigma, as scored"
+        )
     z_line = (
         alt.Chart(zs)
         .mark_line(point=alt.OverlayMarkDef(size=64), strokeWidth=2, color=LINE_COLOR)

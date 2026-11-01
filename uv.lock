@@ -390,7 +390,7 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.4" },
     { name = "spacy", specifier = ">=3.8,<4" },
     { name = "sqlalchemy", specifier = ">=2.0" },
-    { name = "streamlit", specifier = ">=1.40,<2" },
+    { name = "streamlit", specifier = ">=1.66,<2" },
     { name = "uvicorn", specifier = ">=0.30,<1" },
 ]
 

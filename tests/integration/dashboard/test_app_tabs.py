@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import update
 
 import jobsignal.dashboard.app as app_module
-from jobsignal.dashboard.client import ApiClient
+from jobsignal.dashboard.client import ApiClient, ApiUnavailable
 from jobsignal.models import Posting
 from jobsignal.signals.detectors import SCORE_COLUMNS
 from jobsignal.signals.params import DetectorParams
@@ -155,3 +155,42 @@ def test_counter_helper_counts(seeded_api):
     paths: Counter = count_requests(seeded_api)
     seeded_api.get("/api/v1/health")
     assert paths == Counter({"/api/v1/health": 1})
+
+
+class FailsOnNextPage(ApiClient):
+    """The API goes away after the first postings page (e.g. key rotated, server down)."""
+
+    def postings_page(self, **kwargs):
+        if kwargs.get("cursor"):
+            raise ApiUnavailable("Cannot reach the JobSignal API at http://testserver. x")
+        return super().postings_page(**kwargs)
+
+
+def test_load_more_failure_shows_error_not_exception(seeded_api, monkeypatch):
+    monkeypatch.setattr(app_module, "PAGE_SIZE", 2)
+    at = run_app(FailsOnNextPage(seeded_api))
+    at.button(key="load_more").click().run()
+    assert not at.exception
+    assert [e.value for e in at.error] == ["Cannot reach the JobSignal API at http://testserver. x"]
+
+
+def test_country_filter_offers_only_known_countries(seeded_api):
+    seen = record_queries(seeded_api)
+    at = run_app(ApiClient(seeded_api))
+    country = at.selectbox(key="country_filter")
+    assert list(country.options) == ["All", "GB", "US"]  # from the composition, no free text
+    country.select("GB").run()
+    assert not at.exception
+    assert sorted(postings_table(at)["title"]) == ["Account Executive", "Senior Account Executive"]
+    postings_calls = [params for path, params in seen if path == "/api/v1/postings"]
+    assert postings_calls[-1]["country"] == "GB"
+
+
+def test_refresh_now_reloads_postings(seeded_api, monkeypatch):
+    monkeypatch.setattr(app_module, "PAGE_SIZE", 2)
+    at = run_app(ApiClient(seeded_api))
+    at.button(key="load_more").click().run()
+    assert len(postings_table(at)) == 4
+    at.button(key="refresh").click().run()
+    assert not at.exception
+    assert len(postings_table(at)) == 2  # loaded rows dropped with the cache: first page again

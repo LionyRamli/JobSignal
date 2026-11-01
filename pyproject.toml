@@ -13,7 +13,7 @@ dependencies = [
     "pydantic-settings>=2.4",
     "spacy>=3.8,<4",
     "sqlalchemy>=2.0",
-    "streamlit>=1.40,<2",
+    "streamlit>=1.66,<2",
     "uvicorn>=0.30,<1",
 ]
 
