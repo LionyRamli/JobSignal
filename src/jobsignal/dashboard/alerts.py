@@ -1,4 +1,4 @@
-"""Alert logic for the dashboard: colour bands, grouping, plain-English copy, freshness.
+"""Alert logic for the dashboard: colour bands, grouping, plain-language copy, freshness.
 
 Pure functions over the API's response models: no Streamlit, no I/O.
 """
@@ -10,6 +10,7 @@ from typing import Literal
 import pandas as pd
 
 from jobsignal.api.schemas import SignalOut, SignalTrend
+from jobsignal.dashboard.glossary import EN, Copy
 from jobsignal.dashboard.trends import (  # noqa: F401 - stale_* re-exported
     STALE_AFTER,
     delta_prev,
@@ -40,28 +41,30 @@ def z_band(z: float | None) -> Band:
     return "none"
 
 
-def cell_label(s: SignalOut) -> str:
-    return f"{s.role_family or 'all roles'} · {s.country_code or 'all countries'}"
+def cell_label(s: SignalOut, copy: Copy = EN) -> str:
+    family = copy.pretty(s.role_family) if s.role_family else copy.text["all_roles"]
+    return f"{family} · {s.country_code or copy.text['all_countries']}"
 
 
-def describe(s: SignalOut) -> str:
-    """One plain-English sentence explaining a score."""
-    prefix = f"{s.company} · {cell_label(s)}"
+def describe(s: SignalOut, copy: Copy = EN) -> str:
+    """One plain-language sentence explaining a score."""
+    text = copy.text
+    prefix = f"{s.company} · {cell_label(s, copy)}"
     if s.z is None:
-        return f"{prefix}: not scored ({s.status})"
+        status = copy.score_status.get(s.status, copy.pretty(s.status))
+        return text["describe_unscored"].format(prefix=prefix, status=status)
+    z = f"{s.z:+.2f}"
     if s.detector == "mix_shift":
-        recent = "n/a" if s.share_recent is None else f"{s.share_recent:.1%}"
-        baseline = "n/a" if s.share_baseline is None else f"{s.share_baseline:.1%}"
-        return (
-            f"{prefix}: {recent} of recent postings vs {baseline} in the baseline "
-            f"(z = {s.z:+.2f}, provisional)"
-        )
-    observed = "n/a" if s.observed is None else f"{s.observed:g}"
-    mean = "n/a" if s.baseline_mean is None else f"{s.baseline_mean:.1f}"
-    std = "n/a" if s.baseline_std is None else f"{s.baseline_std:.1f}"
-    return (
-        f"{prefix}: {observed} new postings in the week of {s.week_start.isoformat()} "
-        f"vs a baseline of {mean} ± {std} (z = {s.z:+.2f})"
+        recent = text["na"] if s.share_recent is None else f"{s.share_recent:.1%}"
+        baseline = text["na"] if s.share_baseline is None else f"{s.share_baseline:.1%}"
+        return text["describe_mix"].format(prefix=prefix, recent=recent, baseline=baseline, z=z)
+    return text["describe_volume"].format(
+        prefix=prefix,
+        observed=text["na"] if s.observed is None else f"{s.observed:g}",
+        week=s.week_start.isoformat(),
+        mean=text["na"] if s.baseline_mean is None else f"{s.baseline_mean:.1f}",
+        std=text["na"] if s.baseline_std is None else f"{s.baseline_std:.1f}",
+        z=z,
     )
 
 
@@ -104,7 +107,10 @@ def safe_url(url: str | None) -> str | None:
     return url if url.strip().lower().startswith(("http://", "https://")) else None
 
 
-def alerts_frame(groups: Sequence[AlertGroup], trends: Mapping[int, SignalTrend]) -> pd.DataFrame:
+def alerts_frame(
+    groups: Sequence[AlertGroup], trends: Mapping[int, SignalTrend], copy: Copy = EN
+) -> pd.DataFrame:
+    """One row per alert group, codes kept (display_alerts translates them)."""
     rows = []
     for group in groups:
         s = group.headline
@@ -115,7 +121,7 @@ def alerts_frame(groups: Sequence[AlertGroup], trends: Mapping[int, SignalTrend]
                 "id": s.id,
                 "band": z_band(s.z),
                 "company": s.company,
-                "cell": cell_label(s),
+                "cell": cell_label(s, copy),
                 "detector": s.detector,
                 "direction": s.direction,
                 "z": s.z,
@@ -126,7 +132,19 @@ def alerts_frame(groups: Sequence[AlertGroup], trends: Mapping[int, SignalTrend]
                 "trend": sparkline(trend) if trend else [],
                 "week": s.week_start,
                 "provisional": s.provisional,
-                "also_at": ", ".join(cell_label(r) for r in group.related),
+                "also_at": ", ".join(cell_label(r, copy) for r in group.related),
             }
         )
     return pd.DataFrame(rows, columns=ALERT_COLUMNS, dtype=object)
+
+
+def display_alerts(frame: pd.DataFrame, copy: Copy = EN) -> pd.DataFrame:
+    """The alerts table as shown: codes become business words; numbers stay untouched."""
+    shown = frame.copy()
+    for column, names in (
+        ("band", copy.band),
+        ("detector", copy.detector),
+        ("direction", copy.direction),
+    ):
+        shown[column] = [names.get(v, v) for v in frame[column]]
+    return shown

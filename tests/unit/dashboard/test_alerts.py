@@ -13,6 +13,7 @@ from jobsignal.dashboard.alerts import (
     stale_companies,
     z_band,
 )
+from jobsignal.dashboard.glossary import ZH
 
 WEEK = date(2026, 10, 12)
 
@@ -54,20 +55,21 @@ def test_cell_label():
     assert cell_label(signal(level="company", role_family=None, country_code=None)) == (
         "all roles · all countries"
     )
-    assert cell_label(signal()) == "sales · GB"
+    assert cell_label(signal()) == "Sales · GB"
+    assert cell_label(mix()) == "Solutions Engineering · US"
 
 
 def test_describe_volume():
     assert describe(signal()) == (
-        "acme · sales · GB: 12 new postings in the week of 2026-10-12 vs a baseline of "
-        "3.1 ± 1.2 (z = +3.20)"
+        "acme · Sales · GB: 12 new postings in the week of 2026-10-12, vs a normal level of "
+        "3.1 ± 1.2 a week (Anomaly Score Z = +3.20)"
     )
 
 
 def test_describe_mix():
     assert describe(mix()) == (
-        "anthropic · solutions_engineering · US: 12.4% of recent postings vs 4.2% in the "
-        "baseline (z = +3.27, provisional)"
+        "anthropic · Solutions Engineering · US: 12.4% of recent postings vs 4.2% before "
+        "(Anomaly Score Z = +3.27, provisional)"
     )
 
 
@@ -76,9 +78,22 @@ def test_describe_not_scored():
         signal(company="beta", level="company", role_family=None, country_code=None, z=None,
                baseline_mean=None, baseline_std=None, status="insufficient_history")
     )  # fmt: skip
-    assert text == "beta · all roles · all countries: not scored (insufficient_history)"
+    assert text == "beta · all roles · all countries: not scored yet (not enough history)"
     assert "nan" not in text
     assert "None" not in text
+
+
+def test_describe_in_mandarin():
+    assert describe(signal(), ZH) == (
+        "acme · 業務 · GB：2026-10-12 當週新增 12 個職缺，正常水準為每週 3.1 ± 1.2 個"
+        "（異常分數 Z = +3.20）"
+    )
+    assert describe(mix(), ZH) == (
+        "anthropic · 解決方案工程 · US：近期職缺占比 12.4%，先前為 4.2%（異常分數 Z = +3.27，初步）"
+    )
+    unscored = signal(level="company", role_family=None, country_code=None, z=None,
+                      status="below_min_count")  # fmt: skip
+    assert describe(unscored, ZH) == "acme · 所有職務 · 所有國家：尚未評分（職缺數過少）"
 
 
 def test_group_alerts_merges_levels_and_picks_headline():
@@ -183,7 +198,7 @@ def test_alerts_frame_also_at_lists_related_cells():
         signal(id=2, level="company_family", country_code=None, z=3.4),
     ])  # fmt: skip
     frame = alerts_frame(groups, {})
-    assert frame.loc[0, "also_at"] == "sales · all countries"
+    assert frame.loc[0, "also_at"] == "Sales · all countries"
 
 
 def test_alerts_frame_empty_has_columns():

@@ -20,9 +20,11 @@ def _fresh_cache():
     st.cache_data.clear()
 
 
-def run_app(client) -> AppTest:
+def run_app(client, query_params: dict[str, str] | None = None) -> AppTest:
     at = AppTest.from_file(str(APP), default_timeout=30)
     at.session_state["api_client"] = client
+    for key, value in (query_params or {}).items():
+        at.query_params[key] = value
     return at.run()
 
 

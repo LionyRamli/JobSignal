@@ -47,7 +47,7 @@ def record_queries(http_client) -> list[tuple[str, dict]]:
 
 def test_stale_warning_names_companies(seeded_api):
     at = run_app(ApiClient(seeded_api))
-    warnings = [w.value for w in at.warning if w.value.startswith("Stale data:")]
+    warnings = [w.value for w in at.warning if w.value.startswith("Data out of date:")]
     assert len(warnings) == 1
     assert "acme" in warnings[0]
     assert "beta" in warnings[0]
@@ -124,7 +124,7 @@ def test_runs_tab_lists_runs_and_health(seeded_api):
     at = run_app(ApiClient(seeded_api))
     runs = frame_with(at, "taxonomy_version")
     assert len(runs) == 1
-    assert {m.label: m.value for m in at.metric}["API"] == "ok"
+    assert {m.label: m.value for m in at.metric}["API Status"] == "OK"
 
 
 @pytest.fixture

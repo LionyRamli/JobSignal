@@ -15,10 +15,11 @@ from pathlib import Path
 
 from jobsignal.api.serve import is_loopback
 
-APP_PATH = Path(__file__).resolve().parents[3] / "dashboard" / "app.py"
+PROJECT_ROOT = Path(__file__).resolve().parents[3]
+APP_PATH = PROJECT_ROOT / "dashboard" / "app.py"
 
 
-def main(argv: list[str] | None = None, run: Callable[[list[str]], int] = subprocess.call) -> int:
+def main(argv: list[str] | None = None, run: Callable[..., int] = subprocess.call) -> int:
     parser = argparse.ArgumentParser(description="Serve the JobSignal dashboard (Streamlit).")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8501)
@@ -61,5 +62,7 @@ def main(argv: list[str] | None = None, run: Callable[[list[str]], int] = subpro
             "none",
             "--client.toolbarMode",
             "viewer",
-        ]
+        ],
+        # .streamlit/config.toml (the dark theme) is read from the cwd only
+        cwd=PROJECT_ROOT,
     )
