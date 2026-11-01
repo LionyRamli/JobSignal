@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import event
 
 from jobsignal.weeks import week_start
-from tests.integration.api.conftest import T1
+from tests.integration.conftest import T1
 
 pytestmark = pytest.mark.integration
 

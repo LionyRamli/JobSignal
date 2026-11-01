@@ -8,7 +8,7 @@ from jobsignal.signals.detectors import SCORE_COLUMNS
 from jobsignal.signals.params import DetectorParams
 from jobsignal.storage.db import make_engine, make_session_factory
 from jobsignal.storage.repository import save_signal_run
-from tests.integration.api.conftest import T1
+from tests.integration.conftest import T1
 
 pytestmark = pytest.mark.integration
 

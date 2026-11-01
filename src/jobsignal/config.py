@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     # API: a key is REQUIRED to bind beyond localhost; never logged or echoed.
     api_key: SecretStr | None = None
     api_cors_origins: str = ""  # comma-separated origins; empty = CORS off
+    # Dashboard: where the read-only API lives (http/https only)
+    api_url: str = "http://127.0.0.1:8000"
 
     @field_validator("api_key", mode="before")
     @classmethod
@@ -35,6 +37,14 @@ class Settings(BaseSettings):
     @classmethod
     def _normalize_log_level(cls, value: object) -> object:
         return value.strip().upper() if isinstance(value, str) else value
+
+    @field_validator("api_url")
+    @classmethod
+    def _require_http_api_url(cls, value: str) -> str:
+        value = value.strip().rstrip("/")
+        if not value.lower().startswith(("http://", "https://")) or value[-3:] == "://":
+            raise ValueError("api_url must be an http:// or https:// URL")
+        return value
 
     @field_validator("database_url")
     @classmethod

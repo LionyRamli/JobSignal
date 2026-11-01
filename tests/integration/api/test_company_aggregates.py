@@ -7,7 +7,7 @@ from sqlalchemy import event
 from jobsignal.api.app import create_app
 from jobsignal.api.deps import get_now
 from jobsignal.weeks import week_start
-from tests.integration.api.conftest import T0, T1
+from tests.integration.conftest import T0, T1
 
 pytestmark = pytest.mark.integration
 

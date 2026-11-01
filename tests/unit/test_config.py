@@ -35,3 +35,16 @@ def test_blank_database_url_is_rejected(monkeypatch, bad_url):
     monkeypatch.setenv("JOBSIGNAL_DATABASE_URL", bad_url)
     with pytest.raises(ValidationError):
         get_settings()
+
+
+def test_api_url_default_and_normalisation(monkeypatch):
+    assert get_settings().api_url == "http://127.0.0.1:8000"
+    monkeypatch.setenv("JOBSIGNAL_API_URL", " https://x.example/ ")
+    assert get_settings().api_url == "https://x.example"
+
+
+@pytest.mark.parametrize("bad", ["ftp://x", "javascript:alert(1)", "127.0.0.1:8000", ""])
+def test_api_url_must_be_http(monkeypatch, bad):
+    monkeypatch.setenv("JOBSIGNAL_API_URL", bad)
+    with pytest.raises(ValidationError):
+        get_settings()
