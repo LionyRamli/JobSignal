@@ -1,6 +1,7 @@
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from pydantic import Field
 from sqlalchemy.orm import Session
 
 from jobsignal.api.deps import get_session
@@ -12,9 +13,18 @@ from jobsignal.api.schemas import (
     SignalOut,
     SignalRunOut,
     SignalsPage,
+    SignalTrend,
+    TrendPointOut,
 )
 from jobsignal.signals.drilldown import postings_for_score
-from jobsignal.storage.repository import get_postings, list_scores, list_signal_runs, resolve_run
+from jobsignal.signals.trend import trends_for_scores
+from jobsignal.storage.repository import (
+    get_postings,
+    get_scores,
+    list_scores,
+    list_signal_runs,
+    resolve_run,
+)
 from jobsignal.storage.schema import Company, SignalRun, SignalScore
 
 router = APIRouter(tags=["signals"])
@@ -63,6 +73,35 @@ def signals(
         run=SignalRunOut.from_record(resolved),
         items=[SignalOut.from_record(score, token) for score, token in rows],
     )
+
+
+MAX_TREND_IDS = 50
+TrendIds = Annotated[
+    list[Annotated[int, Field(ge=1, le=INT64_MAX)]],
+    Query(min_length=1, max_length=MAX_TREND_IDS),
+]
+
+
+# declared before /signals/{signal_id}: otherwise "trends" is parsed (and rejected) as an id
+@router.get("/signals/trends", response_model=list[SignalTrend])
+def signal_trends(ids: TrendIds, session: SessionDep) -> list[SignalTrend]:
+    """Weekly trajectory of each score's cell (8 weeks, oldest first) in one call.
+
+    Recomputed with the detector and the run's params: the last point equals the stored
+    score. Unknown ids are omitted; order follows the request (duplicates removed).
+    """
+    wanted = list(dict.fromkeys(ids))
+    found = {score.id: (score, token, run) for score, token, run in get_scores(session, wanted)}
+    ordered = [found[i] for i in wanted if i in found]
+    computed = trends_for_scores(session, ordered)
+    return [
+        SignalTrend(
+            signal_id=score.id,
+            metric="share" if score.detector == "mix_shift" else "count",
+            points=[TrendPointOut(**point._asdict()) for point in computed[score.id]],
+        )
+        for score, _, _ in ordered
+    ]
 
 
 @router.get("/signals/{signal_id}", response_model=SignalDetail)

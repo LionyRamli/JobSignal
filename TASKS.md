@@ -2,13 +2,14 @@
 
 ## Active
 
-- [ ] **Phase 1.6: Dashboard** - Streamlit alerting dashboard over the read-only API (plan pending approval)
+- [ ] **Phase 1.6: Merge `feat/phase-1.6-dashboard`** - waiting on user PR; branch CI must be green
 - [ ] **Ops: schedule daily scrape → harmonize → detect** - the volume detector needs ≥ 8 continuously covered weeks; history is now the bottleneck
 
 ## Backlog
 
 - [ ] **Phase 1.1b: AshbySource for OpenAI** - `api.ashbyhq.com/posting-api/job-board/openai`, same ATSSource interface
 - [ ] **Phase 1.3 follow-up from live signals** - 'engagement manager' / 'field engineer' phrases put 'Community Engagement Manager, Data Centers' and 'Field Engineer, Data Center Design' into solutions_engineering (inflated the live Anthropic SE/US signal); label golden rows first
+- [ ] **Phase 1.6 deferred** (final review) - trend cost ~0.1 s per mix headline (~5 s for 50 alerts, uncached); cache TypeAdapter per model in client; company-trends new_postings ignores postings first seen at partial snapshots; budget test alone doesn't pin no-loop (PAGE_SIZE=2 test does); API test for /signals/trends 401; by_country docstring (mixed located/unlocated); Δz may span gap weeks (column help); mixed units (counts vs shares/pp) in one column; Contractions KPI delta colour (inverse); URL-encode board_token in client path; strip userinfo from API URL in error text
 - [ ] **Phase 1.5 deferred** (final review) - /health 500 when DB unreachable (want 503); typed enum filters (typos → 422 not silent empty); CORS allow X-API-Key header; OpenAPI error models + APIKeyHeader scheme + date-time format; naive-datetime guard in _utc_z; uniform 422 body; double 500 log; tolerate renamed params in old runs; thread test via a session route; newest-first pagination option
 - [ ] **Phase 1.4 deferred** (final review) - recalibrate z threshold on real history (FPR 3-30x nominal under overdispersion); primary-level grouping across the 4 levels (dashboard); robust baseline; --as-of look-ahead in published basis; vacuous cold-start test, weak --as-of test, tautological uniform-growth test; consistency CHECKs; warn when postings not harmonized at current taxonomy; guard baseline_weeks >= 2; retention of repeated target weeks
 - [ ] **Phase 1.3 deferred minors** (final review) - City, ST, Country triples; broad 1-token family phrases (data center, business partner, research economist, risk analyst, <x> recruiter); seniority edge cases (to the CEO, Fellow, Associate GC); remote edge cases (Remote - IN, Remote - US & Canada, Remote - Anywhere); harmonize perf at 100k; single harmonize runner; version length assert; stronger version-bump test; golden tail coverage
@@ -30,6 +31,7 @@
 - [x] ~~Approve folder structure (+ alembic, central logging)~~ (2026-10-31)
 - [x] ~~Phase 0: Initial commit, push, CI green on GitHub (run 41214004282)~~ (2026-10-31)
 - [x] ~~Phase 1.5: API~~ (2026-11-01) - read-only FastAPI (health, meta, companies, postings w/ cursor, signals + drill-down), API key off-localhost, opaque 500s; 462 tests; live smoke on local DB
+- [x] ~~Phase 1.6: Dashboard~~ (2026-11-01) - Streamlit alerts (bands, grouping, 8-week trends, Δs, drill-down), companies (server aggregates, lazy postings), runs & health; API: composition, company-trends, signals/trends; loopback launcher
 - [x] ~~Phase 1.5: merged to main via PR #8, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.4: merged to main via PR, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.4: Signal detection~~ (2026-11-01) - volume + mix_shift detectors (expansion + contraction), coverage-based week availability, storage with raw values, detect CLI, drill-down; 387 tests; live: 1 provisional signal (anthropic SE/US z=+3.27)

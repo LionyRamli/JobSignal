@@ -593,3 +593,60 @@ def get_postings(session: Session, posting_ids: list[int]) -> list[PostingRecord
             .order_by(PostingRecord.id)
         )
     )
+
+
+class Composition(NamedTuple):
+    open_postings: int
+    by_role_family: list[tuple[str | None, int]]
+    by_seniority: list[tuple[str | None, int]]
+    by_country: list[tuple[str | None, int]]
+
+
+def _ranked(counts: dict[str | None, int]) -> list[tuple[str | None, int]]:
+    """Count desc, then key asc, None last."""
+    return sorted(counts.items(), key=lambda kv: (-kv[1], kv[0] is None, kv[0] or ""))
+
+
+def company_composition(session: Session, board_token: str) -> Composition | None:
+    """Open postings of one company counted by role family, seniority and country.
+
+    Country counts are distinct postings per country_code (a posting listed in two countries
+    counts once in each); postings with no located country count under None.
+    """
+    company_id = session.scalar(select(Company.id).where(Company.board_token == board_token))
+    if company_id is None:
+        return None
+    is_open = (PostingRecord.company_id == company_id) & PostingRecord.closed_at.is_(None)
+    families: dict[str | None, int] = {}
+    seniorities: dict[str | None, int] = {}
+    total = 0
+    for family, seniority in session.execute(
+        select(PostingRecord.role_family, PostingRecord.seniority).where(is_open)
+    ):
+        total += 1
+        families[family] = families.get(family, 0) + 1
+        seniorities[seniority] = seniorities.get(seniority, 0) + 1
+    countries = dict(
+        session.execute(
+            select(Location.country_code, func.count(func.distinct(PostingRecord.id)))
+            .select_from(PostingRecord)
+            .outerjoin(posting_locations, posting_locations.c.posting_id == PostingRecord.id)
+            .outerjoin(Location, Location.id == posting_locations.c.location_id)
+            .where(is_open)
+            .group_by(Location.country_code)
+        ).all()
+    )
+    return Composition(total, _ranked(families), _ranked(seniorities), _ranked(countries))
+
+
+def get_scores(session: Session, score_ids: list[int]) -> list[tuple[SignalScore, str, SignalRun]]:
+    """Scores by id with their company token and run, in one query (unknown ids skipped)."""
+    if not score_ids:
+        return []
+    statement = (
+        select(SignalScore, Company.board_token, SignalRun)
+        .join(Company, Company.id == SignalScore.company_id)
+        .join(SignalRun, SignalRun.id == SignalScore.run_id)
+        .where(SignalScore.id.in_(score_ids))
+    )
+    return [(score, token, run) for score, token, run in session.execute(statement)]

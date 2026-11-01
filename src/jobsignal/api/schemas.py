@@ -195,3 +195,39 @@ class SignalDetail(BaseModel):
     signal: SignalOut
     run: SignalRunOut
     postings: list[PostingBrief]
+
+
+class CountOut(BaseModel):
+    key: str | None
+    count: int
+
+
+class CompositionOut(BaseModel):
+    board_token: str
+    open_postings: int
+    by_role_family: list[CountOut]
+    by_seniority: list[CountOut]
+    by_country: list[CountOut]
+
+
+class CompanyTrendPoint(BaseModel):
+    week_start: date
+    open_postings: int | None
+    new_postings: int | None
+
+
+class CompanyTrend(BaseModel):
+    board_token: str
+    points: list[CompanyTrendPoint]
+
+
+class TrendPointOut(BaseModel):
+    week_start: date
+    value: FiniteFloat  # null = week not covered / cell absent, never 0
+    z: FiniteFloat
+
+
+class SignalTrend(BaseModel):
+    signal_id: int
+    metric: Literal["count", "share"]
+    points: list[TrendPointOut]

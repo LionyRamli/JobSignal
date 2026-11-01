@@ -6,12 +6,14 @@ readme = "README.md"
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.13",
+    "altair>=6.3,<7",
     "fastapi>=0.115,<1",
     "httpx>=0.28.1",
     "pandas>=2.2,<3",
     "pydantic-settings>=2.4",
     "spacy>=3.8,<4",
     "sqlalchemy>=2.0",
+    "streamlit>=1.66,<2",
     "uvicorn>=0.30,<1",
 ]
 
@@ -49,5 +51,5 @@ src = ["src", "tests"]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "S", "PT", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S311"]  # pytest asserts; seeded random for test data
+"tests/**" = ["S101", "S105", "S106", "S311"]  # pytest asserts; seeded random for test data
 "alembic/versions/**" = ["F401", "W291"]  # generated: op/sa always imported; blank "Revises:"
