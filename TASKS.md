@@ -2,7 +2,7 @@
 
 ## Active
 
-- [ ] **Phase 1.6: Dashboard** - Streamlit alerting dashboard over the read-only API (plan pending approval)
+- [ ] **Phase 1.6: Merge `feat/phase-1.6-dashboard`** - waiting on user PR; branch CI must be green
 - [ ] **Ops: schedule daily scrape → harmonize → detect** - the volume detector needs ≥ 8 continuously covered weeks; history is now the bottleneck
 
 ## Backlog
@@ -30,6 +30,7 @@
 - [x] ~~Approve folder structure (+ alembic, central logging)~~ (2026-10-31)
 - [x] ~~Phase 0: Initial commit, push, CI green on GitHub (run 41214004282)~~ (2026-10-31)
 - [x] ~~Phase 1.5: API~~ (2026-11-01) - read-only FastAPI (health, meta, companies, postings w/ cursor, signals + drill-down), API key off-localhost, opaque 500s; 462 tests; live smoke on local DB
+- [x] ~~Phase 1.6: Dashboard~~ (2026-11-01) - Streamlit alerts (bands, grouping, 8-week trends, Δs, drill-down), companies (server aggregates, lazy postings), runs & health; API: composition, company-trends, signals/trends; loopback launcher
 - [x] ~~Phase 1.5: merged to main via PR #8, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.4: merged to main via PR, CI green, branch deleted~~ (2026-11-01)
 - [x] ~~Phase 1.4: Signal detection~~ (2026-11-01) - volume + mix_shift detectors (expansion + contraction), coverage-based week availability, storage with raw values, detect CLI, drill-down; 387 tests; live: 1 provisional signal (anthropic SE/US z=+3.27)

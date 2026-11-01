@@ -55,6 +55,8 @@ and B2B opportunities.
 | Signals rules | bump `SIGNALS_VERSION` (signals/params.py) on any detector/param change; only weeks with continuous ok-snapshot coverage are measurable (signals/coverage.py); mix_shift is provisional + survivorship-biased; mix contractions not flagged by default |
 | API | `uv run python scripts/run_api.py [--host 127.0.0.1] [--port 8000]` (never raw uvicorn: it skips the bind guard); read-only GET /api/v1; queries live in storage/repository.py; `create_app(database_url)` for tests (TestClient + migrated tmp SQLite) |
 | API gotchas | bound path/cursor ids to int64 (else driver OverflowError → 500); keep drill-down/list queries bulk (statement-count tests guard N+1); TestClient re-raises server errors unless raise_server_exceptions=False |
+| Dashboard | `uv run python scripts/run_dashboard.py [--port 8501] [--allow-remote]` with the API running; reads only `JOBSIGNAL_API_URL` via `dashboard/client.py`; 60 s `st.cache_data`; postings one page per click; trends via `/signals/trends` (≤ 50 ids, ~0.1 s each) |
+| Dashboard gotchas | AppTest injects `session_state["api_client"]`; clear `st.cache_data` between tests (process-global); build display frames with `dtype=object` (pandas/Altair turn None into NaN; gaps must stay null); never `unsafe_allow_html` (test-guarded); dashboard must not import storage/signals/sqlalchemy (subprocess test) |
 | Dashboard data | raw z/observed/baseline on every signal_scores row; mix rows: observed & baseline_mean are cell TOTALS, shares = / company_*_total; drill-down: signals.drilldown.postings_for_score |
 | Phase 1.4 counting | postings have MANY locations and places nest (city ⊂ region ⊂ country): count `COUNT(DISTINCT posting_id)` after roll-up |
 | .gitignore gotcha | no inline comments; anchor paths (`/data/`) — unanchored `data/` once hid package data |
@@ -70,7 +72,8 @@ and B2B opportunities.
 
 ## Status
 - **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) · 1.5 read-only API (FastAPI) — all on `main`, CI green
-- **Next:** Phase 1.6 Streamlit dashboard (reads the API); ops: schedule daily scrape → harmonize → detect
+- **In review:** Phase 1.6 dashboard (branch `feat/phase-1.6-dashboard`)
+- **Next:** ops: schedule daily scrape → harmonize → detect (trends need ≥ 8 covered weeks); Phase 1.7 review & hardening
 
 ## Approved Structure (2026-10-31)
 - `src/jobsignal/` layout: `config.py`, `logger.py`, `models.py`, `extraction/`, `harmonization/`,

@@ -27,6 +27,7 @@ uv run python scripts/run_scrape.py anthropic databricks stripe  # scrape + stor
 uv run python scripts/run_harmonize.py                          # role + location taxonomy
 uv run python scripts/run_detect.py                             # hiring signals
 uv run python scripts/run_api.py                                # read-only API on 127.0.0.1:8000
+uv run python scripts/run_dashboard.py                          # dashboard on 127.0.0.1:8501
 uv run pytest                # run the test suite
 uv run ruff check . && uv run ruff format --check .
 ```
@@ -123,6 +124,9 @@ A read-only FastAPI service. Every route is a `GET` under `/api/v1`. Interactive
 | `/signal-runs` | Runs, newest `as_of` first, with their params and versions |
 | `/signals` | `run=latest` or an id; filters `detector`, `direction`, `level`, `company`, `min_abs_z`, `signals_only`. Raw z and inputs are included; `mix_shift` rows add `share_recent`/`share_baseline` and are marked `provisional` |
 | `/signals/{id}` | One score, its run and the postings behind it (drill-down) |
+| `/signals/trends?ids=…` | 1–50 scores: each cell's last 8 weeks (`value`, `z`), recomputed with the detector and the run's params. The last point equals the stored score. Uncovered weeks are `null` |
+| `/companies/{token}/composition` | Open postings counted by role family, seniority and country (server-side) |
+| `/company-trends?weeks=12` | Weekly `open_postings` and `new_postings` per company (`null` = no trustworthy scrape that week) |
 
 **Security defaults**
 - The server binds `127.0.0.1`. To bind anything else, `JOBSIGNAL_API_KEY` must be set, or the
@@ -131,6 +135,31 @@ A read-only FastAPI service. Every route is a `GET` under `/api/v1`. Interactive
 - Always start the API with `scripts/run_api.py`. Running `uvicorn` directly bypasses the bind
   check.
 - Errors never include tracebacks. CORS is off unless `JOBSIGNAL_API_CORS_ORIGINS` is set.
+
+## Dashboard
+
+A Streamlit dashboard for clients. It reads **only** the API, never the database.
+
+```bash
+uv run python scripts/run_api.py         # terminal 1
+uv run python scripts/run_dashboard.py   # terminal 2 -> http://127.0.0.1:8501
+```
+
+| Tab | Shows |
+|-----|-------|
+| **Alerts** | KPI tiles with the change since the previous week's run; a z-score chart; alert groups (one event at several levels is one row, with "also at"), each with an 8-week sparkline, Δz vs the previous week and Δ vs baseline; per-alert detail with a plain-English explanation, a trend chart and the postings behind it |
+| **Companies** | Open-postings and new-postings sparklines and Δ per company; composition charts; the postings table, filtered on the server, loaded 200 rows at a time (**Load 200 more**) |
+| **Runs & health** | API status, versions, run history and parameters |
+
+- **Bands:** red when |z| > 5, yellow when 3 ≤ |z| ≤ 5. The band is also shown as text.
+- **Freshness:** API reads are cached for 60 s (**Refresh now** clears it). A warning names any
+  company whose last scrape is older than 36 h or did not finish ok.
+- **Trends start empty.** Volume trends need 8 covered weeks of scraping; until then they show
+  gaps ("Not enough history yet"). `mix_shift` is provisional and labelled so.
+- **Security:** binds 127.0.0.1 (`.streamlit/config.toml` and the launcher). Another host needs
+  `--allow-remote` and prints a warning: the dashboard has **no login**. The API key stays on
+  the server. Scraped titles and links are shown as plain text; only http(s) links are
+  clickable. Usage statistics are off.
 
 ## Configuration
 
@@ -142,3 +171,4 @@ Settings load from `JOBSIGNAL_*` environment variables or a local `.env` file:
 | `JOBSIGNAL_LOG_LEVEL` | `INFO` | `DEBUG` / `INFO` / `WARNING` / `ERROR` / `CRITICAL` |
 | `JOBSIGNAL_API_KEY` | *(empty)* | Required to bind the API beyond localhost; sent as `X-API-Key` |
 | `JOBSIGNAL_API_CORS_ORIGINS` | *(empty)* | Comma-separated origins allowed by CORS (GET only) |
+| `JOBSIGNAL_API_URL` | `http://127.0.0.1:8000` | Where the dashboard finds the API (http/https only) |
