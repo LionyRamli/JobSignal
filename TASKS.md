@@ -25,6 +25,7 @@
 
 ## Done
 
+- [x] ~~Hotfix: dashboard sparklines rendered as `,,,,675` error text~~ (2026-11-01) - Streamlit chart columns reject a whole cell on any None/NaN element; cells now plot known weeks only (`trends.chart_values`), deltas still from raw weeks; app-level guard checks every chart column
 - [x] ~~Create CLAUDE.md and TASKS.md~~ (2026-10-31)
 - [x] ~~Approve folder structure (+ alembic, central logging)~~ (2026-10-31)
 - [x] ~~Phase 0: Initial commit, push, CI green on GitHub (run 41214004282)~~ (2026-10-31)

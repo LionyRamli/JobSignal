@@ -1,5 +1,7 @@
+import math
 from collections import Counter
 from datetime import timedelta
+from numbers import Real
 
 import pandas as pd
 import pytest
@@ -20,7 +22,7 @@ from jobsignal.storage.repository import (
 )
 from jobsignal.storage.schema import PostingRecord
 from tests.integration.conftest import T0, T1
-from tests.integration.dashboard.conftest import count_requests, run_app
+from tests.integration.dashboard.conftest import chart_cells, count_requests, run_app
 
 pytestmark = pytest.mark.integration
 
@@ -89,8 +91,19 @@ def test_company_table_has_trends(seeded_api):
     at = run_app(ApiClient(seeded_api))
     table = frame_with(at, "open_trend")
     assert list(table["company"]) == ["acme", "beta"]
-    assert all(len(cell) == 12 for cell in table["open_trend"])
+    assert any(len(cell) for cell in table["open_trend"])
     assert "nan" not in table["d_open_prev_week"].astype(str).str.lower().tolist()
+
+
+def test_every_chart_cell_is_all_numeric(seeded_api):
+    """Streamlit's chart columns turn a WHOLE cell into an error string ("...,675" plus
+    "is not a number") when any element is None or NaN, so a gap must never reach one."""
+    cells = chart_cells(run_app(ApiClient(seeded_api)))
+    assert {"trend", "open_trend", "new_trend"} <= set(cells)  # both tabs' sparklines
+    for name, column in cells.items():
+        for cell in column:
+            bad = [v for v in cell if not (isinstance(v, Real) and math.isfinite(v))]
+            assert not bad, f"{name}: {list(cell)}"
 
 
 def test_older_empty_run_shows_empty_info(seeded_api, migrated_url):

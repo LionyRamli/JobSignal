@@ -1,5 +1,6 @@
 """Dashboard app fixtures: Streamlit's AppTest driving the real app against the real API."""
 
+import json
 from collections import Counter
 
 import pytest
@@ -30,6 +31,20 @@ def count_requests(http_client) -> Counter:
     paths: Counter = Counter()
     http_client.event_hooks["request"].append(lambda request: paths.update([request.url.path]))
     return paths
+
+
+CHART_TYPES = {"line_chart", "area_chart", "bar_chart"}
+
+
+def chart_cells(at: AppTest) -> dict[str, list]:
+    """Every chart-column cell on the page, by column name (from each frame's column_config)."""
+    found: dict[str, list] = {}
+    for frame in at.dataframe:
+        config = json.loads(frame.proto.columns or "{}")
+        for name, column in config.items():
+            if column.get("type_config", {}).get("type") in CHART_TYPES:
+                found[name] = list(frame.value[name])
+    return found
 
 
 def texts(at: AppTest) -> list[str]:

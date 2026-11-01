@@ -1,6 +1,12 @@
-"""Trajectory maths for the dashboard: sparklines and deltas. Gaps stay gaps (None)."""
+"""Trajectory maths for the dashboard: sparklines and deltas.
 
-from collections.abc import Sequence
+Gaps stay gaps (None) in the maths. Sparkline cells cannot hold them: Streamlit's chart
+columns turn a WHOLE cell into an error string if any element is None or NaN, so a cell
+plots the known weeks only (see ``chart_values``).
+"""
+
+import math
+from collections.abc import Iterable, Sequence
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -15,8 +21,13 @@ COMPANY_COLUMNS = [
 ]  # fmt: skip
 
 
-def sparkline(trend: SignalTrend) -> list[float | None]:
-    return [p.value for p in trend.points]
+def chart_values(values: Iterable[float | None]) -> list[float]:
+    """The finite values in order: the only thing a st.column_config chart cell renders."""
+    return [v for v in values if v is not None and math.isfinite(v)]
+
+
+def sparkline(trend: SignalTrend) -> list[float]:
+    return chart_values(p.value for p in trend.points)
 
 
 def delta_prev(values: Sequence[float | None]) -> float | None:
@@ -70,8 +81,8 @@ def company_frame(
                 "company": c.board_token,
                 "open_postings": c.open_postings,
                 "d_open_prev_week": delta_prev(opens),
-                "open_trend": opens,
-                "new_trend": [p.new_postings for p in trend.points] if trend else [],
+                "open_trend": chart_values(opens),  # the delta above uses the raw weeks
+                "new_trend": chart_values(p.new_postings for p in trend.points) if trend else [],
                 "last_scrape": c.last_snapshot_at,
                 "status": c.last_snapshot_status,
                 "stale": c.board_token in stale,

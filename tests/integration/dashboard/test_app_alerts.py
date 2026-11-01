@@ -49,7 +49,7 @@ def test_alerts_tab_renders_grouped_signals(seeded_api):
     table = alerts_table(at)
     assert list(table["band"]) == ["yellow", "yellow"]
     assert list(table["z"]) == [-5.0, 3.2]
-    assert all(len(cell) == 8 for cell in table["trend"])
+    assert all(len(cell) <= 8 for cell in table["trend"])  # known weeks of the 8-week window
 
 
 def test_alerts_trends_fetched_in_one_request(seeded_api):

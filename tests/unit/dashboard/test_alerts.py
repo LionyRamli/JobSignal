@@ -165,7 +165,7 @@ def test_alerts_frame_columns_trend_and_dz():
         "observed", "baseline", "d_baseline", "trend", "week", "provisional", "also_at",
     ]  # fmt: skip
     by_id = frame.set_index("id")
-    assert by_id.loc[1, "trend"] == [2.0, None, 3.0, 12.0]
+    assert by_id.loc[1, "trend"] == [2.0, 3.0, 12.0]  # chart cells drop gaps
     assert by_id.loc[1, "dz_prev_week"] == pytest.approx(2.2)
     assert by_id.loc[1, "d_baseline"] == pytest.approx(12.0 - 3.14)
     assert by_id.loc[2, "trend"] == []  # no trend fetched for it

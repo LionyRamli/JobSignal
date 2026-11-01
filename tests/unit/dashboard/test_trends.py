@@ -11,6 +11,7 @@ from jobsignal.api.schemas import (
 )
 from jobsignal.dashboard.trends import (
     COMPANY_COLUMNS,
+    chart_values,
     company_frame,
     delta_prev,
     delta_vs_baseline,
@@ -37,8 +38,15 @@ def test_deltas_skip_gaps(values, expected):
     assert delta_prev(values) == expected
 
 
-def test_sparkline_keeps_gaps():
-    assert sparkline(trend(1, [2.0, None, 3.0], [None, None, 1.0])) == [2.0, None, 3.0]
+def test_chart_values_drop_gaps_and_non_finite():
+    """Streamlit chart columns reject a whole cell if any element is None or NaN."""
+    assert chart_values([None, 10, None, 12, float("nan"), float("inf"), 3]) == [10, 12, 3]
+    assert chart_values([None, None]) == []
+    assert chart_values([]) == []
+
+
+def test_sparkline_drops_gaps():
+    assert sparkline(trend(1, [2.0, None, 3.0], [None, None, 1.0])) == [2.0, 3.0]
 
 
 def test_delta_vs_baseline():
@@ -95,11 +103,21 @@ def test_company_frame_delta_and_gaps():
     ]  # fmt: skip
     acme, beta = frame.iloc[0], frame.iloc[1]
     assert acme["d_open_prev_week"] == 2
-    assert acme["open_trend"] == [None, 10, 12]
-    assert acme["new_trend"] == [None, None, 4]
+    assert acme["open_trend"] == [10, 12]  # chart cells: known weeks only
+    assert acme["new_trend"] == [4]
     assert not acme["stale"]
     assert beta["d_open_prev_week"] is None
     assert beta["stale"]
+
+
+def test_company_frame_delta_uses_raw_weeks_not_the_chart_cell():
+    companies = [
+        Company(board_token="acme", source="greenhouse", open_postings=7,
+                last_snapshot_at=NOW - timedelta(hours=1), last_snapshot_status="ok"),
+    ]  # fmt: skip
+    row = company_frame(companies, [company_trend("acme", [5, 7, None])], NOW).iloc[0]
+    assert row["open_trend"] == [5, 7]
+    assert row["d_open_prev_week"] is None  # this week is unknown: no delta, not +2
 
 
 def test_company_frame_company_without_trend():
