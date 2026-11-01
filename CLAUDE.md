@@ -69,6 +69,7 @@ and B2B opportunities.
 | Secret scan | pre-commit hook runs `gitleaks git --pre-commit --staged --redact` (`.pre-commit-config.yaml`; setup: `uv run pre-commit install`). Never bypass with `--no-verify`. History scan: `gitleaks git --redact .` |
 | gitleaks PATH | winget install lives in `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Gitleaks.Gitleaks_*`; a shell started before install lacks it — prepend that dir to PATH |
 | Security sweep | history `gitleaks git --redact .`; deps `uv export --locked --no-hashes --no-emit-project > reqs.txt` then `uvx pip-audit -r reqs.txt --no-deps` (`gitleaks dir .` also flags test strings inside `.venv`: ignore those) |
+| Demo seed | `scripts/seed_historical_data.py` (logic `jobsignal/seed_demo.py`): backs up jobsignal.db → jobsignal_real_backup.db FIRST, then ~10 weeks of synthetic daily ok snapshots + a London spike in the last complete week; real initial-load postings are backdated to the first synthetic snapshot (else the real scrape reads as a re-import); `--restore` copies the backup back. DEMO ONLY: never seed a production DB |
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
 ## Status

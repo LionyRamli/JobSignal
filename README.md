@@ -20,6 +20,7 @@ expansion, investment priorities and emerging B2B opportunities.
 - [Architecture](#architecture)
 - [Getting started](#getting-started)
 - [How to run](#how-to-run)
+- [Demo data (time machine)](#demo-data-time-machine)
 - [Configuration](#configuration)
 - [Security](#security)
 - [Quality assurance](#quality-assurance)
@@ -117,6 +118,31 @@ uv run python scripts/run_dashboard.py        # http://127.0.0.1:8501
 Options: `--host` (default `127.0.0.1`), `--port` (default `8501`) and `--allow-remote` (needed
 for any non-localhost host; the dashboard has **no login**). The dashboard finds the API through
 `JOBSIGNAL_API_URL`.
+
+## Demo data (time machine)
+
+The volume detector needs about 10 weeks of daily scraping before it can score anything. For
+demonstrations, `scripts/seed_historical_data.py` adds **synthetic** history for one company
+(default `databricks`). The scenario is a quiet AI/engineering baseline, then 40 AI
+Infrastructure Engineer and Solutions Architect openings in London during the last complete
+week. The real pipeline then flags it as a red alert.
+
+```bash
+uv run python scripts/seed_historical_data.py    # 1. backs up jobsignal.db, then seeds
+uv run python scripts/run_harmonize.py           # 2. classify the synthetic postings
+uv run python scripts/run_detect.py              # 3. score: red alert for Databricks · GB
+uv run python scripts/run_api.py                 # 4. terminal 1
+uv run python scripts/run_dashboard.py           # 5. terminal 2
+uv run python scripts/seed_historical_data.py --restore   # afterwards: real database back
+```
+
+- The script **backs up `jobsignal.db` to `jobsignal_real_backup.db` before changing
+  anything**. It refuses to run if that backup already exists or if the company is already
+  seeded.
+- Run steps 1–3 in the same Monday–Sunday week as the demo: the spike is placed in the last
+  complete week before the seeding time.
+- Synthetic postings are marked (`demo-` external ids, `example.com` links). Real postings are
+  kept and stay open. Say that the history is synthetic when you present it.
 
 ## Configuration
 
