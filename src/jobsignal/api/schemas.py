@@ -195,3 +195,27 @@ class SignalDetail(BaseModel):
     signal: SignalOut
     run: SignalRunOut
     postings: list[PostingBrief]
+
+
+class CountOut(BaseModel):
+    key: str | None
+    count: int
+
+
+class CompositionOut(BaseModel):
+    board_token: str
+    open_postings: int
+    by_role_family: list[CountOut]
+    by_seniority: list[CountOut]
+    by_country: list[CountOut]
+
+
+class CompanyTrendPoint(BaseModel):
+    week_start: date
+    open_postings: int | None
+    new_postings: int | None
+
+
+class CompanyTrend(BaseModel):
+    board_token: str
+    points: list[CompanyTrendPoint]
