@@ -49,5 +49,5 @@ src = ["src", "tests"]
 select = ["E", "W", "F", "I", "B", "UP", "SIM", "N", "S", "PT", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101", "S311"]  # pytest asserts; seeded random for test data
+"tests/**" = ["S101", "S105", "S106", "S311"]  # pytest asserts; seeded random for test data
 "alembic/versions/**" = ["F401", "W291"]  # generated: op/sa always imported; blank "Revises:"

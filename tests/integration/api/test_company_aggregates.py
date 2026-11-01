@@ -34,7 +34,7 @@ def test_composition_counts(seeded_api):
     # acme open postings: 1 Account Executive (GB), 2 Software Engineer (US),
     # 3 Data Scientist (US), 6 Senior Account Executive (GB); 4 closed at T1
     body = seeded_api.get("/api/v1/companies/acme/composition").json()
-    assert body["board_token"] == "acme"  # noqa: S105 - a company token, not a secret
+    assert body["board_token"] == "acme"
     assert body["open_postings"] == 4
     assert body["by_role_family"] == [
         {"key": "sales", "count": 2},
