@@ -219,3 +219,15 @@ class CompanyTrendPoint(BaseModel):
 class CompanyTrend(BaseModel):
     board_token: str
     points: list[CompanyTrendPoint]
+
+
+class TrendPointOut(BaseModel):
+    week_start: date
+    value: FiniteFloat  # null = week not covered / cell absent, never 0
+    z: FiniteFloat
+
+
+class SignalTrend(BaseModel):
+    signal_id: int
+    metric: Literal["count", "share"]
+    points: list[TrendPointOut]
