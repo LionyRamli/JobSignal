@@ -24,12 +24,16 @@ DOWN = (
 )
 
 
+KPIS = ("Alerts", "Expansions", "Contractions", "Companies with alerts")
+
+
 def metrics(at) -> dict[str, str]:
-    return {m.label: m.value for m in at.metric}
+    """The Alerts tab's KPI tiles (other tabs have their own metrics)."""
+    return {m.label: m.value for m in at.metric if m.label in KPIS}
 
 
 def deltas(at) -> dict[str, str | None]:
-    return {m.label: m.delta for m in at.metric}
+    return {m.label: m.delta for m in at.metric if m.label in KPIS}
 
 
 def alerts_table(at) -> pd.DataFrame:
