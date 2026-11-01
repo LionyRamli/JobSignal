@@ -69,8 +69,7 @@ and B2B opportunities.
 | Mutation check | tdd-skill `mutate-check.sh` calls `python3` → Windows Store stub; prepend a `python3`→`python` shim to PATH |
 
 ## Status
-- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) — all on `main`, CI green
-- **In review:** Phase 1.5 API (branch `feat/phase-1.5-api`)
+- **Done:** Phase 0 scaffold · 1.1 extraction (Greenhouse) · 1.2 storage (SQLite schema, history) · 1.3 harmonization (role/seniority/location taxonomy) · 1.4 signal detection (volume + mix_shift) · 1.5 read-only API (FastAPI) — all on `main`, CI green
 - **Next:** Phase 1.6 Streamlit dashboard (reads the API); ops: schedule daily scrape → harmonize → detect
 
 ## Approved Structure (2026-10-31)
