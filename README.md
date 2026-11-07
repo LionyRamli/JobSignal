@@ -21,6 +21,7 @@ expansion, investment priorities and emerging B2B opportunities.
 - [Getting started](#getting-started)
 - [How to run](#how-to-run)
 - [Demo data (time machine)](#demo-data-time-machine)
+- [Demo Pictures](#demo-picture)
 - [Configuration](#configuration)
 - [Security](#security)
 - [Quality assurance](#quality-assurance)
@@ -30,6 +31,7 @@ expansion, investment priorities and emerging B2B opportunities.
 - [Data model](#data-model)
 - [Project Structure](#project-Structure)
 - [Roadmap](#roadmap)
+- [Project Author](#project-Author)
 
 ## Features
 
@@ -143,6 +145,18 @@ uv run python scripts/seed_historical_data.py --restore   # afterwards: real dat
   complete week before the seeding time.
 - Synthetic postings are marked (`demo-` external ids, `example.com` links). Real postings are
   kept and stay open. Say that the history is synthetic when you present it.
+
+## demo-picture
+To prove how this works, i seeded a realistic scenario into our database and run it, giving me this result. If you want the  seeded file, you can contact me
+<img width="1920" height="1080" alt="Screenshot (4)" src="https://github.com/user-attachments/assets/ceaa65bd-f0b5-43b6-ae21-1d59acb15f6e" />
+<img width="1920" height="1080" alt="Screenshot (5)" src="https://github.com/user-attachments/assets/388c53a6-636b-42b7-95a1-db1b62ad01ad" />
+<img width="1920" height="1080" alt="Screenshot (6)" src="https://github.com/user-attachments/assets/acb067d4-0379-4274-a1f0-0c0691d56b29" />
+<img width="1920" height="1080" alt="Screenshot (7)" src="https://github.com/user-attachments/assets/6159c14d-ed2b-46f7-882a-e00f5c0f727c" />
+<img width="1920" height="1080" alt="Screenshot (2)" src="https://github.com/user-attachments/assets/b5b4453f-d870-4d37-b116-607439a798ea" />
+<img width="1920" height="1080" alt="Screenshot (8)" src="https://github.com/user-attachments/assets/32c2608d-13a6-42c2-b80a-df62d1f54589" />
+<img width="1920" height="1080" alt="Screenshot (9)" src="https://github.com/user-attachments/assets/aee2cb4b-9e69-4717-94a3-b0a5214c9777" />
+<img width="1920" height="1080" alt="Screenshot (10)" src="https://github.com/user-attachments/assets/b07a53db-55df-4b02-8f56-f22920a128d5" />
+<img width="1920" height="1080" alt="Screenshot (11)" src="https://github.com/user-attachments/assets/5f68a7d5-a053-4496-b45d-cd22989f0967" />
 
 ## Configuration
 
@@ -316,7 +330,8 @@ docs/superpowers/  design specs and implementation plans for each phase
 
 Open follow-ups are tracked in [`TASKS.md`](TASKS.md).
 
----
+## Project Author
+LIONY - lionyramli07@gmail.com <3
 
 *JobSignal is a university computer-science project. No open-source license has been chosen
 yet.*
