@@ -28,7 +28,7 @@ expansion, investment priorities and emerging B2B opportunities.
 - [Dashboard](#dashboard)
 - [Methodology](#methodology)
 - [Data model](#data-model)
-- [Project layout](#project-layout)
+- [Project Structure](#project-Structure)
 - [Roadmap](#roadmap)
 
 ## Features
