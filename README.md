@@ -286,7 +286,7 @@ parameters, the taxonomy version, and the raw z, observed and baseline values of
 A posting is closed only when a **complete** fetch no longer lists it; failed or partial fetches
 never close anything. Run one scrape at a time per database.
 
-## Project layout
+## Project Structure
 
 ```
 src/jobsignal/
